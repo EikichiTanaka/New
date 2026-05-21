@@ -1,18 +1,25 @@
-#pragma once
+﻿#pragma once
+
+// ============================================================
+// ResultScene.h
+// リザルト画面シーン
+//
+// 【役割】
+// ゲーム終了後のスコアやプレイ結果を表示する。
+// ENTER キーでタイトル画面に戻る。
+// ============================================================
+
 #include "Scene/SceneBase.h"
 
 class ResultScene : public SceneBase
 {
 public:
 	void Init() override;
-	void Update() override;
+	SceneType Update() override;
 	void Draw() override;
-	void Final() override;
 
 private:
-	int m_TargetScore = 0;
-	float m_DisplayScore = 0.0f;
-	int m_AnimTimer = 0;
-	int m_ShakeTimer = 0;
-	char m_Rank = 'C';
+	void FinalizeAchievements();
+
+	int m_AnimTimer;
 };

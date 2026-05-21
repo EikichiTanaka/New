@@ -1,29 +1,32 @@
-#pragma once
+﻿#pragma once
 
-enum class SceneID
-{
-	Title,
-	DifficultySelect,
-	Game,
-	Result
-};
+// ============================================================
+// SceneManager.h
+// シーン（画面）の生成と遷移を管理するクラス
+// ============================================================
+
+#include "Scene/SceneBase.h"
 
 class SceneManager
 {
 public:
-	static SceneManager& GetInstance();
+	SceneManager();
+	~SceneManager();
+
+	// 初期シーンを生成して開始する
 	void Init();
-	void Update();
+
+	// 現在のシーンを更新し、必要に応じて遷移する
+	// 戻り値: ゲーム続行ならば true、終了するなら false
+	bool Update();
+
+	// 現在のシーンを描画する
 	void Draw();
-	void Final();
-	void RequestChangeScene(SceneID id);
 
 private:
-	SceneManager() = default;
-	void ChangeScene(SceneID id);
+	// 指定したシーンに切り替える
+	void ChangeScene(SceneType nextScene);
 
-	SceneID m_CurrentId = SceneID::Title;
-	SceneID m_NextId = SceneID::Title;
-	bool m_ChangeReq = false;
-	class SceneBase* m_Scene = nullptr;
+	// 現在アクティブなシーンへのポインタ
+	SceneBase* m_pCurrentScene;
 };

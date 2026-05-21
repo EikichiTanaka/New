@@ -78,7 +78,7 @@
       <PreprocessorDefinitions>WIN32;_DEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <LanguageStandard>stdcpp17</LanguageStandard>
-      <AdditionalOptions>/FS /wd4828 /wd4819 %(AdditionalOptions)</AdditionalOptions>
+      <AdditionalOptions>/utf-8 /FS /wd4828 /wd4819 %(AdditionalOptions)</AdditionalOptions>
       <DisableSpecificWarnings>4828;4819;%(DisableSpecificWarnings)</DisableSpecificWarnings>
       <AdditionalIncludeDirectories>$(DXLIB_DIR);$(ProjectDir)Source;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
@@ -98,7 +98,7 @@
       <PreprocessorDefinitions>WIN32;NDEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <LanguageStandard>stdcpp17</LanguageStandard>
-      <AdditionalOptions>/FS /wd4828 /wd4819 %(AdditionalOptions)</AdditionalOptions>
+      <AdditionalOptions>/utf-8 /FS /wd4828 /wd4819 %(AdditionalOptions)</AdditionalOptions>
       <DisableSpecificWarnings>4828;4819;%(DisableSpecificWarnings)</DisableSpecificWarnings>
       <AdditionalIncludeDirectories>$(DXLIB_DIR);$(ProjectDir)Source;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
@@ -118,7 +118,7 @@
       <PreprocessorDefinitions>_DEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <LanguageStandard>stdcpp17</LanguageStandard>
-      <AdditionalOptions>/FS /wd4828 /wd4819 %(AdditionalOptions)</AdditionalOptions>
+      <AdditionalOptions>/utf-8 /FS /wd4828 /wd4819 %(AdditionalOptions)</AdditionalOptions>
       <DisableSpecificWarnings>4828;4819;%(DisableSpecificWarnings)</DisableSpecificWarnings>
       <AdditionalIncludeDirectories>$(DXLIB_DIR);$(ProjectDir)Source;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
@@ -138,7 +138,7 @@
       <PreprocessorDefinitions>NDEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <LanguageStandard>stdcpp17</LanguageStandard>
-      <AdditionalOptions>/FS /wd4828 /wd4819 %(AdditionalOptions)</AdditionalOptions>
+      <AdditionalOptions>/utf-8 /FS /wd4828 /wd4819 %(AdditionalOptions)</AdditionalOptions>
       <DisableSpecificWarnings>4828;4819;%(DisableSpecificWarnings)</DisableSpecificWarnings>
       <AdditionalIncludeDirectories>$(DXLIB_DIR);$(ProjectDir)Source;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
@@ -153,38 +153,50 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="Source\main.cpp" />
-    <ClCompile Include="Source\Common\GameData.cpp" />
-    <ClCompile Include="Source\Common\KeyHelper.cpp" />
     <ClCompile Include="Source\Manager\SceneManager.cpp" />
     <ClCompile Include="Source\Scene\TitleScene.cpp" />
     <ClCompile Include="Source\Scene\DifficultySelectScene.cpp" />
     <ClCompile Include="Source\Scene\GameScene.cpp" />
+    <ClCompile Include="Source\Scene\TutorialScene.cpp" />
     <ClCompile Include="Source\Scene\ResultScene.cpp" />
-    <ClCompile Include="Source\Game\BlockManager.cpp" />
-    <ClCompile Include="Source\Game\Paddle.cpp" />
-    <ClCompile Include="Source\Game\Ball.cpp" />
-    <ClCompile Include="Source\Game\GhostRecorder.cpp" />
-    <ClCompile Include="Source\Game\GamePlay.cpp" />
-    <ClCompile Include="Source\Game\GameEffect.cpp" />
+    <ClCompile Include="Source\Scene\OptionsScene.cpp" />
+    <ClCompile Include="Source\Common\GameOptions.cpp" />
+    <ClCompile Include="Source\Common\GameScreen.cpp" />
+    <ClCompile Include="Source\Common\BgmPlayer.cpp" />
+    <ClCompile Include="Source\Game\Player.cpp" />
+    <ClCompile Include="Source\Game\Enemy.cpp" />
+    <ClCompile Include="Source\Game\EnemyManager.cpp" />
+    <ClCompile Include="Source\Game\BulletManager.cpp" />
+    <ClCompile Include="Source\Game\Effect.cpp" />
     <ClCompile Include="Source\Common\SoundSynth.cpp" />
+    <ClCompile Include="Source\Common\GameData.cpp" />
+    <ClCompile Include="Source\Common\GameSession.cpp" />
+    <ClCompile Include="Source\Common\SaveData.cpp" />
+    <ClCompile Include="Source\Common\KeyHelper.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Source\GameConfig.h" />
-    <ClInclude Include="Source\Game\BlockManager.h" />
-    <ClInclude Include="Source\Game\Paddle.h" />
-    <ClInclude Include="Source\Game\Ball.h" />
-    <ClInclude Include="Source\Game\GhostRecorder.h" />
-    <ClInclude Include="Source\Game\GamePlay.h" />
-    <ClInclude Include="Source\Game\GameEffect.h" />
-    <ClInclude Include="Source\Common\GameData.h" />
-    <ClInclude Include="Source\Common\KeyHelper.h" />
     <ClInclude Include="Source\Manager\SceneManager.h" />
     <ClInclude Include="Source\Scene\SceneBase.h" />
     <ClInclude Include="Source\Scene\TitleScene.h" />
     <ClInclude Include="Source\Scene\DifficultySelectScene.h" />
     <ClInclude Include="Source\Scene\GameScene.h" />
+    <ClInclude Include="Source\Scene\TutorialScene.h" />
     <ClInclude Include="Source\Scene\ResultScene.h" />
+    <ClInclude Include="Source\Game\Player.h" />
+    <ClInclude Include="Source\Game\Enemy.h" />
+    <ClInclude Include="Source\Game\EnemyManager.h" />
+    <ClInclude Include="Source\Game\Bullet.h" />
+    <ClInclude Include="Source\Game\BulletManager.h" />
+    <ClInclude Include="Source\Game\BulletPool.h" />
+    <ClInclude Include="Source\Game\SpatialGrid.h" />
+    <ClInclude Include="Source\Game\Collision.h" />
+    <ClInclude Include="Source\Game\Effect.h" />
     <ClInclude Include="Source\Common\SoundSynth.h" />
+    <ClInclude Include="Source\Common\GameData.h" />
+    <ClInclude Include="Source\Common\GameSession.h" />
+    <ClInclude Include="Source\Common\SaveData.h" />
+    <ClInclude Include="Source\Common\KeyHelper.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets" />

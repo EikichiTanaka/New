@@ -1,62 +1,75 @@
-// =============================================================================
+﻿// ============================================================
 // main.cpp
-// エントリポイント WinMain とメインループ
-// =============================================================================
+// ゲームのエントリーポイント（プログラム起点）
+//
+// 【主な責務】
+// 1. DxLib の初期化（ウィンドウ生成・文字コード設定など）
+// 2. SceneManager の生成（初期シーン作成）
+// 3. メインループ（毎フレーム Update → Draw を回す）
+// 4. DxLib の終了処理
+// ============================================================
 
 #include "DxLib.h"
 #include "GameConfig.h"
 #include "Manager/SceneManager.h"
+#include "Common/SaveData.h"
 #include "Common/KeyHelper.h"
-#include "Common/SoundSynth.h"
+#include "Common/GameOptions.h"
+#include "Common/BgmPlayer.h"
+#include "Common/GameScreen.h"
 
+// ============================================================
+// WinMain: Windows アプリケーションのエントリーポイント
+// ============================================================
 int WINAPI WinMain(
 	HINSTANCE hInstance,
 	HINSTANCE hPrevInstance,
 	LPSTR lpCmdLine,
-	int nCmdShow)
+	int nCmdShow
+)
 {
-	(void)hInstance;
-	(void)hPrevInstance;
-	(void)lpCmdLine;
-	(void)nCmdShow;
+	// ソースコードの文字コードを UTF-8 として扱うよう DxLib に通知
+	// （これにより日本語文字列がそのまま正しく描画される）
+	SetUseCharCodeFormat(DX_CHARCODEFORMAT_UTF8);
 
-	if (DxLib_Init() == -1)
-	{
-		return -1;
-	}
-
-	SetUseCharCodeFormat(DX_CHARCODEFORMAT_SHIFTJIS);
-
-	SetWindowSizeExtendRate(1.0);
-	ChangeWindowMode(TRUE);
-	SetGraphMode(SCREEN_WIDTH, SCREEN_HEIGHT, 32);
 	SetMainWindowText(WINDOW_TITLE);
 
-	SoundSynth::Init();
-	SceneManager::GetInstance().Init();
+	// DxLib 初期化
+	if (DxLib_Init() == -1) return -1;
 
+	GameOptionsLoad();
+	GameOptionsApplyGraphics();
+	GameScreenSyncSize();
+	GameOptionsApplyVolumes();
+	BgmPlayer::Init();
+
+	// 日本語表示用フォント（UTF-8 文字列）
+	SetFontSize(20);
+	ChangeFont("Meiryo");
+
+	SaveDataLoad();
+
+	SceneManager sceneManager;
+	sceneManager.Init();
+
+	// メインゲームループ
 	while (ProcessMessage() == 0)
 	{
-		// フレームの最初にキー状態を更新
 		KeyHelper::Update();
 
-		if (CheckHitKey(KEY_INPUT_ESCAPE) != 0)
+		ClearDrawScreen();
+
+		if (!sceneManager.Update())
 		{
 			break;
 		}
 
-		SetDrawScreen(DX_SCREEN_BACK);
-		ClearDrawScreen();
-
-		SceneManager::GetInstance().Update();
-		SceneManager::GetInstance().Draw();
-
+		sceneManager.Draw();
 		ScreenFlip();
 	}
 
-	SceneManager::GetInstance().Final();
-	SoundSynth::Final();
+	BgmPlayer::Final();
+	GameOptionsSave();
 	DxLib_End();
-
 	return 0;
 }

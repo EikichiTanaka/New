@@ -35,3 +35,13 @@ bool KeyHelper::IsLaunchTrigger()
 	if (IsTrigger(KEY_INPUT_SPACE)) return true;
 	return false;
 }
+
+bool KeyHelper::IsConfirmTrigger()
+{
+	return IsTrigger(KEY_INPUT_RETURN) || IsTrigger(KEY_INPUT_NUMPADENTER);
+}
+
+bool KeyHelper::IsCancelTrigger()
+{
+	return IsTrigger(KEY_INPUT_ESCAPE);
+}

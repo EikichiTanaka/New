@@ -1,4 +1,4 @@
-﻿<?xml version="1.0" encoding="utf-8"?>
+<?xml version="1.0" encoding="utf-8"?>
 <Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup>
     <Filter Include="ソース ファイル">
@@ -47,6 +47,9 @@
     <ClCompile Include="Source\Common\KeyHelper.cpp">
       <Filter>ソース ファイル\Common</Filter>
     </ClCompile>
+    <ClCompile Include="Source\Common\SoundSynth.cpp">
+      <Filter>ソース ファイル\Common</Filter>
+    </ClCompile>
     <ClCompile Include="Source\Manager\SceneManager.cpp">
       <Filter>ソース ファイル\Manager</Filter>
     </ClCompile>
@@ -59,25 +62,25 @@
     <ClCompile Include="Source\Scene\GameScene.cpp">
       <Filter>ソース ファイル\Scene</Filter>
     </ClCompile>
+    <ClCompile Include="Source\Scene\TutorialScene.cpp">
+      <Filter>ソース ファイル\Scene</Filter>
+    </ClCompile>
     <ClCompile Include="Source\Scene\ResultScene.cpp">
       <Filter>ソース ファイル\Scene</Filter>
     </ClCompile>
-    <ClCompile Include="Source\Game\BlockManager.cpp">
+    <ClCompile Include="Source\Game\Player.cpp">
       <Filter>ソース ファイル\Game</Filter>
     </ClCompile>
-    <ClCompile Include="Source\Game\Paddle.cpp">
+    <ClCompile Include="Source\Game\Enemy.cpp">
       <Filter>ソース ファイル\Game</Filter>
     </ClCompile>
-    <ClCompile Include="Source\Game\Ball.cpp">
+    <ClCompile Include="Source\Game\EnemyManager.cpp">
       <Filter>ソース ファイル\Game</Filter>
     </ClCompile>
-    <ClCompile Include="Source\Game\GhostRecorder.cpp">
+    <ClCompile Include="Source\Game\BulletManager.cpp">
       <Filter>ソース ファイル\Game</Filter>
     </ClCompile>
-    <ClCompile Include="Source\Game\GamePlay.cpp">
-      <Filter>ソース ファイル\Game</Filter>
-    </ClCompile>
-    <ClCompile Include="Source\Game\GameEffect.cpp">
+    <ClCompile Include="Source\Game\Effect.cpp">
       <Filter>ソース ファイル\Game</Filter>
     </ClCompile>
   </ItemGroup>
@@ -89,6 +92,9 @@
       <Filter>ヘッダー ファイル\Common</Filter>
     </ClInclude>
     <ClInclude Include="Source\Common\KeyHelper.h">
+      <Filter>ヘッダー ファイル\Common</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\Common\SoundSynth.h">
       <Filter>ヘッダー ファイル\Common</Filter>
     </ClInclude>
     <ClInclude Include="Source\Manager\SceneManager.h">
@@ -106,25 +112,37 @@
     <ClInclude Include="Source\Scene\GameScene.h">
       <Filter>ヘッダー ファイル\Scene</Filter>
     </ClInclude>
+    <ClInclude Include="Source\Scene\TutorialScene.h">
+      <Filter>ヘッダー ファイル\Scene</Filter>
+    </ClInclude>
     <ClInclude Include="Source\Scene\ResultScene.h">
       <Filter>ヘッダー ファイル\Scene</Filter>
     </ClInclude>
-    <ClInclude Include="Source\Game\BlockManager.h">
+    <ClInclude Include="Source\Game\Player.h">
       <Filter>ヘッダー ファイル\Game</Filter>
     </ClInclude>
-    <ClInclude Include="Source\Game\Paddle.h">
+    <ClInclude Include="Source\Game\Enemy.h">
       <Filter>ヘッダー ファイル\Game</Filter>
     </ClInclude>
-    <ClInclude Include="Source\Game\Ball.h">
+    <ClInclude Include="Source\Game\EnemyManager.h">
       <Filter>ヘッダー ファイル\Game</Filter>
     </ClInclude>
-    <ClInclude Include="Source\Game\GhostRecorder.h">
+    <ClInclude Include="Source\Game\Bullet.h">
       <Filter>ヘッダー ファイル\Game</Filter>
     </ClInclude>
-    <ClInclude Include="Source\Game\GamePlay.h">
+    <ClInclude Include="Source\Game\BulletManager.h">
       <Filter>ヘッダー ファイル\Game</Filter>
     </ClInclude>
-    <ClInclude Include="Source\Game\GameEffect.h">
+    <ClInclude Include="Source\Game\BulletPool.h">
+      <Filter>ヘッダー ファイル\Game</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\Game\SpatialGrid.h">
+      <Filter>ヘッダー ファイル\Game</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\Game\Collision.h">
+      <Filter>ヘッダー ファイル\Game</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\Game\Effect.h">
       <Filter>ヘッダー ファイル\Game</Filter>
     </ClInclude>
   </ItemGroup>

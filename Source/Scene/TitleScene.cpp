@@ -1,88 +1,72 @@
-#include "Scene/TitleScene.h"
-#include "Manager/SceneManager.h"
+﻿#include "Scene/TitleScene.h"
+#include "GameConfig.h"
 #include "Common/KeyHelper.h"
 #include "DxLib.h"
-#include "GameConfig.h"
-#include <math.h>
 
 void TitleScene::Init()
 {
-	m_Timer = 0;
-	for (int i = 0; i < MAX_RAIN; i++)
-	{
-		m_Rain[i].x = (float)(GetRand(SCREEN_WIDTH / 10) * 10);
-		m_Rain[i].y = (float)(GetRand(SCREEN_HEIGHT));
-		m_Rain[i].speed = 2.0f + GetRand(5);
-		m_Rain[i].length = 5 + GetRand(10);
-	}
+	m_AnimTimer = 0;
 }
 
-void TitleScene::Update()
+SceneType TitleScene::Update()
 {
-	m_Timer++;
-	for (int i = 0; i < MAX_RAIN; i++)
-	{
-		m_Rain[i].y += m_Rain[i].speed;
-		if (m_Rain[i].y > SCREEN_HEIGHT + 100)
-		{
-			m_Rain[i].y = -100.0f;
-			m_Rain[i].x = (float)(GetRand(SCREEN_WIDTH / 10) * 10);
-		}
-	}
+	m_AnimTimer++;
 
-	if (KeyHelper::IsLaunchTrigger())
-		SceneManager::GetInstance().RequestChangeScene(SceneID::DifficultySelect);
+	if (KeyHelper::IsCancelTrigger())
+		return SceneType::Exit;
+
+	if (KeyHelper::IsTrigger(KEY_INPUT_O))
+		return SceneType::Options;
+
+	if (KeyHelper::IsConfirmTrigger())
+		return SceneType::DifficultySelect;
+
+	return SceneType::None;
 }
+
 void TitleScene::Draw()
 {
-	SetBackgroundColor(5, 10, 5);
-
-	// Draw Matrix Rain
-	SetDrawBlendMode(DX_BLENDMODE_ADD, 120);
-	for (int i = 0; i < MAX_RAIN; i++)
-	{
-		for (int j = 0; j < m_Rain[i].length; j++)
-		{
-			float py = m_Rain[i].y - j * 12;
-			if (py > 0 && py < SCREEN_HEIGHT)
-			{
-				int alpha = 255 - j * (255 / m_Rain[i].length);
-				SetDrawBlendMode(DX_BLENDMODE_ADD, alpha);
-				DrawFormatString((int)m_Rain[i].x, (int)py, GetColor(0, 255, 100), "%d", GetRand(9));
-			}
-		}
-	}
-	SetDrawBlendMode(DX_BLENDMODE_NOBLEND, 0);
-
-	// Dummy Hacker Logs
-	SetDrawBlendMode(DX_BLENDMODE_ADD, 80);
-	DrawFormatString(20, 20 + (m_Timer % 200) / 5, GetColor(0, 200, 100), "[INFO] Connecting to Neuro-Link...");
-	DrawFormatString(20, 40 + (m_Timer % 200) / 5, GetColor(0, 200, 100), "[WARN] Ghost entities detected.");
-	DrawFormatString(20, 60 + (m_Timer % 200) / 5, GetColor(0, 200, 100), "[OK] System overrides ready.");
-	SetDrawBlendMode(DX_BLENDMODE_NOBLEND, 0);
-
-	// Glitching Title Logo
 	int centerX = SCREEN_WIDTH / 2;
 	int centerY = SCREEN_HEIGHT / 2;
-	int titleX = centerX - 80;
-	int titleY = centerY - 120;
-	int color = GetColor(0, 255, 80);
-	if (GetRand(100) < 5) // 5% chance to glitch each frame
+
+	for (int y = 0; y < SCREEN_HEIGHT; y += 2)
 	{
-		titleX += GetRand(10) - 5;
-		titleY += GetRand(4) - 2;
-		color = GetRand(2) == 0 ? GetColor(255, 0, 0) : GetColor(0, 255, 255);
+		float t = (float)y / (float)SCREEN_HEIGHT;
+		int r = (int)(8 * (1.0f - t));
+		int g = (int)(4 * (1.0f - t));
+		int b = (int)(40 + 20 * (1.0f - t));
+		DrawLine(0, y, SCREEN_WIDTH, y, GetColor(r, g, b));
 	}
-	DrawFormatString(titleX, titleY, color, "=== HACKER BRAIN ===");
-	
-	DrawFormatString(centerX - 112, titleY + 60, GetColor(150, 255, 150), "Block Breaker + Ghost Paddle");
-	DrawFormatString(centerX - 148, titleY + 110, GetColor(200, 200, 200), "Your past movement blocks the ball...");
-	
-	// Pulsing Start Prompt
-	int pulseAlpha = 155 + (int)(sinf(m_Timer * 0.1f) * 100);
-	SetDrawBlendMode(DX_BLENDMODE_ALPHA, pulseAlpha);
-	DrawFormatString(centerX - 52, titleY + 230, GetColor(255, 255, 255), "ENTER : Start");
-	SetDrawBlendMode(DX_BLENDMODE_NOBLEND, 0);
-	DrawFormatString(centerX - 48, titleY + 270, GetColor(100, 100, 100), "ESC   : Quit");
+
+	for (int i = 0; i < 60; i++)
+	{
+		int sx = (i * 137 + m_AnimTimer * 4) % SCREEN_WIDTH;
+		int sy = (i * 53) % SCREEN_HEIGHT;
+		int br = 80 + (i * 17) % 175;
+		DrawPixel(sx, sy, GetColor(br, br, br));
+	}
+
+	SetFontSize(72);
+	DrawFormatString(centerX - 240, centerY - 180, GetColor(255, 80, 120), "BULLET STORM");
+
+	SetFontSize(28);
+	DrawFormatString(centerX - 200, centerY - 90, GetColor(0, 230, 255), "― 超爽快３Ｄ弾幕シューティング ―");
+
+	SetFontSize(22);
+	DrawFormatString(centerX - 280, centerY - 30, GetColor(220, 220, 220), "敵弾の嵐をかいくぐり、超弾幕でねじ伏せろ！");
+
+	if ((m_AnimTimer / 30) % 2 == 0)
+	{
+		SetFontSize(26);
+		DrawFormatString(centerX - 200, centerY + 60, GetColor(255, 255, 0), ">>  ＥＮＴＥＲキーでスタート  <<");
+	}
+
+	SetFontSize(18);
+	DrawFormatString(centerX - 220, centerY + 130, GetColor(180, 200, 255), "移動：方向キー / WASD    低速：Shift");
+	DrawFormatString(centerX - 220, centerY + 155, GetColor(180, 200, 255), "ショット：Ｚ / Space     ボム：Ｘ / Ｂ");
+
+	SetFontSize(16);
+	DrawFormatString(centerX - 160, centerY + 200, GetColor(140, 140, 140), "O:オプション  ESC:終了");
+
+	SetFontSize(20);
 }
-void TitleScene::Final() {}

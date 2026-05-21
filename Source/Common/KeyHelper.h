@@ -1,4 +1,4 @@
-#pragma once
+﻿#pragma once
 
 // 1フレームだけ押されたキーを判定
 class KeyHelper
@@ -14,4 +14,10 @@ public:
 
 	// ボール発射・決定用（Enter / テンキーEnter / Space）
 	static bool IsLaunchTrigger();
+
+	// メニュー決定（Enter / テンキーEnter）1回押しのみ
+	static bool IsConfirmTrigger();
+
+	// メニュー戻る・終了（Esc）1回押しのみ
+	static bool IsCancelTrigger();
 };
