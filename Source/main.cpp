@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 ﻿// ============================================================
 // main.cpp
 // ゲームのエントリーポイント（プログラム起点）
@@ -73,3 +74,11 @@ int WINAPI WinMain(
 	DxLib_End();
 	return 0;
 }
+=======
+std::cout << "Hello, World!" << std::endl; 
+std::cout << "Hello, World!" << std::endl; 
+std::cout << "Hello, World!" << std::endl; 
+
+
+return 0;
+>>>>>>> parent of 5455143 (asd)

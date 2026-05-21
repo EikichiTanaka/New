@@ -3,40 +3,8 @@
   "WorkspaceRootPath": "C:\\Users\\student\\Desktop\\\uFF4C\uFF4C\uFF4C\\New\\",
   "Documents": [
     {
-      "AbsoluteMoniker": "D:0:0:{CF0748BA-3910-4559-868C-0D6897AA17F2}|Project1.vcxproj|C:\\Users\\student\\Desktop\\\uFF4C\uFF4C\uFF4C\\New\\Source\\Scene\\TitleScene.cpp||{D0E1A5C6-B359-4E41-9B60-3365922C2A22}",
-      "RelativeMoniker": "D:0:0:{CF0748BA-3910-4559-868C-0D6897AA17F2}|Project1.vcxproj|solutionrelative:Source\\Scene\\TitleScene.cpp||{D0E1A5C6-B359-4E41-9B60-3365922C2A22}"
-    },
-    {
-      "AbsoluteMoniker": "D:0:0:{CF0748BA-3910-4559-868C-0D6897AA17F2}|Project1.vcxproj|C:\\Users\\student\\Desktop\\\uFF4C\uFF4C\uFF4C\\New\\Source\\Game\\BulletManager.cpp||{D0E1A5C6-B359-4E41-9B60-3365922C2A22}",
-      "RelativeMoniker": "D:0:0:{CF0748BA-3910-4559-868C-0D6897AA17F2}|Project1.vcxproj|solutionrelative:Source\\Game\\BulletManager.cpp||{D0E1A5C6-B359-4E41-9B60-3365922C2A22}"
-    },
-    {
-      "AbsoluteMoniker": "D:0:0:{CF0748BA-3910-4559-868C-0D6897AA17F2}|Project1.vcxproj|C:\\Users\\student\\Desktop\\\uFF4C\uFF4C\uFF4C\\New\\Source\\Common\\KeyHelper.cpp||{D0E1A5C6-B359-4E41-9B60-3365922C2A22}",
-      "RelativeMoniker": "D:0:0:{CF0748BA-3910-4559-868C-0D6897AA17F2}|Project1.vcxproj|solutionrelative:Source\\Common\\KeyHelper.cpp||{D0E1A5C6-B359-4E41-9B60-3365922C2A22}"
-    },
-    {
-      "AbsoluteMoniker": "D:0:0:{CF0748BA-3910-4559-868C-0D6897AA17F2}|Project1.vcxproj|C:\\Users\\student\\Desktop\\\uFF4C\uFF4C\uFF4C\\New\\Source\\Scene\\DifficultySelectScene.cpp||{D0E1A5C6-B359-4E41-9B60-3365922C2A22}",
-      "RelativeMoniker": "D:0:0:{CF0748BA-3910-4559-868C-0D6897AA17F2}|Project1.vcxproj|solutionrelative:Source\\Scene\\DifficultySelectScene.cpp||{D0E1A5C6-B359-4E41-9B60-3365922C2A22}"
-    },
-    {
-      "AbsoluteMoniker": "D:0:0:{CF0748BA-3910-4559-868C-0D6897AA17F2}|Project1.vcxproj|C:\\Users\\student\\Desktop\\\uFF4C\uFF4C\uFF4C\\New\\Source\\Manager\\SceneManager.cpp||{D0E1A5C6-B359-4E41-9B60-3365922C2A22}",
-      "RelativeMoniker": "D:0:0:{CF0748BA-3910-4559-868C-0D6897AA17F2}|Project1.vcxproj|solutionrelative:Source\\Manager\\SceneManager.cpp||{D0E1A5C6-B359-4E41-9B60-3365922C2A22}"
-    },
-    {
-      "AbsoluteMoniker": "D:0:0:{CF0748BA-3910-4559-868C-0D6897AA17F2}|Project1.vcxproj|C:\\Users\\student\\Desktop\\\uFF4C\uFF4C\uFF4C\\New\\Source\\main.cpp||{D0E1A5C6-B359-4E41-9B60-3365922C2A22}",
-      "RelativeMoniker": "D:0:0:{CF0748BA-3910-4559-868C-0D6897AA17F2}|Project1.vcxproj|solutionrelative:Source\\main.cpp||{D0E1A5C6-B359-4E41-9B60-3365922C2A22}"
-    },
-    {
-      "AbsoluteMoniker": "D:0:0:{CF0748BA-3910-4559-868C-0D6897AA17F2}|Project1.vcxproj|C:\\Users\\student\\Desktop\\\uFF4C\uFF4C\uFF4C\\New\\Source\\Scene\\ResultScene.cpp||{D0E1A5C6-B359-4E41-9B60-3365922C2A22}",
-      "RelativeMoniker": "D:0:0:{CF0748BA-3910-4559-868C-0D6897AA17F2}|Project1.vcxproj|solutionrelative:Source\\Scene\\ResultScene.cpp||{D0E1A5C6-B359-4E41-9B60-3365922C2A22}"
-    },
-    {
-      "AbsoluteMoniker": "D:0:0:{CF0748BA-3910-4559-868C-0D6897AA17F2}|Project1.vcxproj|C:\\Users\\student\\Desktop\\\uFF4C\uFF4C\uFF4C\\New\\Source\\Scene\\GameScene.cpp||{D0E1A5C6-B359-4E41-9B60-3365922C2A22}",
-      "RelativeMoniker": "D:0:0:{CF0748BA-3910-4559-868C-0D6897AA17F2}|Project1.vcxproj|solutionrelative:Source\\Scene\\GameScene.cpp||{D0E1A5C6-B359-4E41-9B60-3365922C2A22}"
-    },
-    {
-      "AbsoluteMoniker": "D:0:0:{CF0748BA-3910-4559-868C-0D6897AA17F2}|Project1.vcxproj|C:\\Users\\student\\Desktop\\\uFF4C\uFF4C\uFF4C\\New\\Source\\Scene\\TitleScene.h||{D0E1A5C6-B359-4E41-9B60-3365922C2A22}",
-      "RelativeMoniker": "D:0:0:{CF0748BA-3910-4559-868C-0D6897AA17F2}|Project1.vcxproj|solutionrelative:Source\\Scene\\TitleScene.h||{D0E1A5C6-B359-4E41-9B60-3365922C2A22}"
+      "AbsoluteMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|C:\\Users\\student\\Desktop\\\uFF4C\uFF4C\uFF4C\\New\\Source\\Scene\\TitleScene.cpp||{D0E1A5C6-B359-4E41-9B60-3365922C2A22}",
+      "RelativeMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|solutionrelative:Source\\Scene\\TitleScene.cpp||{D0E1A5C6-B359-4E41-9B60-3365922C2A22}"
     },
     {
       "AbsoluteMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|C:\\Users\\student\\Desktop\\\uFF4C\uFF4C\uFF4C\\New\\Source\\Game\\BlockManager.cpp||{D0E1A5C6-B359-4E41-9B60-3365922C2A22}",
@@ -55,16 +23,48 @@
       "RelativeMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|solutionrelative:Source\\Game\\GameEffect.cpp||{D0E1A5C6-B359-4E41-9B60-3365922C2A22}"
     },
     {
-      "AbsoluteMoniker": "D:0:0:{CF0748BA-3910-4559-868C-0D6897AA17F2}|Project1.vcxproj|C:\\Users\\student\\Desktop\\\uFF4C\uFF4C\uFF4C\\New\\Source\\Common\\SoundSynth.cpp||{D0E1A5C6-B359-4E41-9B60-3365922C2A22}",
-      "RelativeMoniker": "D:0:0:{CF0748BA-3910-4559-868C-0D6897AA17F2}|Project1.vcxproj|solutionrelative:Source\\Common\\SoundSynth.cpp||{D0E1A5C6-B359-4E41-9B60-3365922C2A22}"
+      "AbsoluteMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|C:\\Users\\student\\Desktop\\\uFF4C\uFF4C\uFF4C\\New\\Source\\Game\\BulletManager.cpp||{D0E1A5C6-B359-4E41-9B60-3365922C2A22}",
+      "RelativeMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|solutionrelative:Source\\Game\\BulletManager.cpp||{D0E1A5C6-B359-4E41-9B60-3365922C2A22}"
     },
     {
-      "AbsoluteMoniker": "D:0:0:{CF0748BA-3910-4559-868C-0D6897AA17F2}|Project1.vcxproj|C:\\Users\\student\\Desktop\\\uFF4C\uFF4C\uFF4C\\New\\Source\\Common\\GameData.cpp||{D0E1A5C6-B359-4E41-9B60-3365922C2A22}",
-      "RelativeMoniker": "D:0:0:{CF0748BA-3910-4559-868C-0D6897AA17F2}|Project1.vcxproj|solutionrelative:Source\\Common\\GameData.cpp||{D0E1A5C6-B359-4E41-9B60-3365922C2A22}"
+      "AbsoluteMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|C:\\Users\\student\\Desktop\\\uFF4C\uFF4C\uFF4C\\New\\Source\\Common\\SoundSynth.cpp||{D0E1A5C6-B359-4E41-9B60-3365922C2A22}",
+      "RelativeMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|solutionrelative:Source\\Common\\SoundSynth.cpp||{D0E1A5C6-B359-4E41-9B60-3365922C2A22}"
     },
     {
-      "AbsoluteMoniker": "D:0:0:{CF0748BA-3910-4559-868C-0D6897AA17F2}|Project1.vcxproj|C:\\Users\\student\\Desktop\\\uFF4C\uFF4C\uFF4C\\New\\Source\\Common\\GameData.h||{D0E1A5C6-B359-4E41-9B60-3365922C2A22}",
-      "RelativeMoniker": "D:0:0:{CF0748BA-3910-4559-868C-0D6897AA17F2}|Project1.vcxproj|solutionrelative:Source\\Common\\GameData.h||{D0E1A5C6-B359-4E41-9B60-3365922C2A22}"
+      "AbsoluteMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|C:\\Users\\student\\Desktop\\\uFF4C\uFF4C\uFF4C\\New\\Source\\Scene\\ResultScene.cpp||{D0E1A5C6-B359-4E41-9B60-3365922C2A22}",
+      "RelativeMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|solutionrelative:Source\\Scene\\ResultScene.cpp||{D0E1A5C6-B359-4E41-9B60-3365922C2A22}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|C:\\Users\\student\\Desktop\\\uFF4C\uFF4C\uFF4C\\New\\Source\\Scene\\GameScene.cpp||{D0E1A5C6-B359-4E41-9B60-3365922C2A22}",
+      "RelativeMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|solutionrelative:Source\\Scene\\GameScene.cpp||{D0E1A5C6-B359-4E41-9B60-3365922C2A22}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|C:\\Users\\student\\Desktop\\\uFF4C\uFF4C\uFF4C\\New\\Source\\Manager\\SceneManager.cpp||{D0E1A5C6-B359-4E41-9B60-3365922C2A22}",
+      "RelativeMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|solutionrelative:Source\\Manager\\SceneManager.cpp||{D0E1A5C6-B359-4E41-9B60-3365922C2A22}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|C:\\Users\\student\\Desktop\\\uFF4C\uFF4C\uFF4C\\New\\Source\\Scene\\DifficultySelectScene.cpp||{D0E1A5C6-B359-4E41-9B60-3365922C2A22}",
+      "RelativeMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|solutionrelative:Source\\Scene\\DifficultySelectScene.cpp||{D0E1A5C6-B359-4E41-9B60-3365922C2A22}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|C:\\Users\\student\\Desktop\\\uFF4C\uFF4C\uFF4C\\New\\Source\\Common\\KeyHelper.cpp||{D0E1A5C6-B359-4E41-9B60-3365922C2A22}",
+      "RelativeMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|solutionrelative:Source\\Common\\KeyHelper.cpp||{D0E1A5C6-B359-4E41-9B60-3365922C2A22}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|C:\\Users\\student\\Desktop\\\uFF4C\uFF4C\uFF4C\\New\\Source\\Common\\GameData.cpp||{D0E1A5C6-B359-4E41-9B60-3365922C2A22}",
+      "RelativeMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|solutionrelative:Source\\Common\\GameData.cpp||{D0E1A5C6-B359-4E41-9B60-3365922C2A22}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|C:\\Users\\student\\Desktop\\\uFF4C\uFF4C\uFF4C\\New\\Source\\Scene\\TitleScene.h||{D0E1A5C6-B359-4E41-9B60-3365922C2A22}",
+      "RelativeMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|solutionrelative:Source\\Scene\\TitleScene.h||{D0E1A5C6-B359-4E41-9B60-3365922C2A22}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|C:\\Users\\student\\Desktop\\\uFF4C\uFF4C\uFF4C\\New\\Source\\Common\\GameData.h||{D0E1A5C6-B359-4E41-9B60-3365922C2A22}",
+      "RelativeMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|solutionrelative:Source\\Common\\GameData.h||{D0E1A5C6-B359-4E41-9B60-3365922C2A22}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|C:\\Users\\student\\Desktop\\\uFF4C\uFF4C\uFF4C\\New\\Source\\main.cpp||{D0E1A5C6-B359-4E41-9B60-3365922C2A22}",
+      "RelativeMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|solutionrelative:Source\\main.cpp||{D0E1A5C6-B359-4E41-9B60-3365922C2A22}"
     }
   ],
   "DocumentGroupContainers": [
@@ -78,7 +78,7 @@
           "Children": [
             {
               "$type": "Document",
-              "DocumentIndex": 1,
+              "DocumentIndex": 5,
               "Title": "BulletManager.cpp",
               "DocumentMoniker": "C:\\Users\\student\\Desktop\\\uFF4C\uFF4C\uFF4C\\New\\Source\\Game\\BulletManager.cpp",
               "RelativeDocumentMoniker": "Source\\Game\\BulletManager.cpp",
@@ -90,7 +90,7 @@
             },
             {
               "$type": "Document",
-              "DocumentIndex": 13,
+              "DocumentIndex": 6,
               "Title": "SoundSynth.cpp",
               "DocumentMoniker": "C:\\Users\\student\\Desktop\\\uFF4C\uFF4C\uFF4C\\New\\Source\\Common\\SoundSynth.cpp",
               "RelativeDocumentMoniker": "Source\\Common\\SoundSynth.cpp",
@@ -102,7 +102,7 @@
             },
             {
               "$type": "Document",
-              "DocumentIndex": 9,
+              "DocumentIndex": 1,
               "Title": "BlockManager.cpp",
               "DocumentMoniker": "C:\\Users\\student\\Desktop\\\uFF4C\uFF4C\uFF4C\\New\\Source\\Game\\BlockManager.cpp",
               "RelativeDocumentMoniker": "Source\\Game\\BlockManager.cpp",
@@ -114,7 +114,7 @@
             },
             {
               "$type": "Document",
-              "DocumentIndex": 10,
+              "DocumentIndex": 2,
               "Title": "Paddle.cpp",
               "DocumentMoniker": "C:\\Users\\student\\Desktop\\\uFF4C\uFF4C\uFF4C\\New\\Source\\Game\\Paddle.cpp",
               "RelativeDocumentMoniker": "Source\\Game\\Paddle.cpp",
@@ -126,7 +126,7 @@
             },
             {
               "$type": "Document",
-              "DocumentIndex": 11,
+              "DocumentIndex": 3,
               "Title": "Ball.cpp",
               "DocumentMoniker": "C:\\Users\\student\\Desktop\\\uFF4C\uFF4C\uFF4C\\New\\Source\\Game\\Ball.cpp",
               "RelativeDocumentMoniker": "Source\\Game\\Ball.cpp",
@@ -138,7 +138,7 @@
             },
             {
               "$type": "Document",
-              "DocumentIndex": 6,
+              "DocumentIndex": 7,
               "Title": "ResultScene.cpp",
               "DocumentMoniker": "C:\\Users\\student\\Desktop\\\uFF4C\uFF4C\uFF4C\\New\\Source\\Scene\\ResultScene.cpp",
               "RelativeDocumentMoniker": "Source\\Scene\\ResultScene.cpp",
@@ -156,14 +156,14 @@
               "RelativeDocumentMoniker": "Source\\Scene\\TitleScene.cpp",
               "ToolTip": "C:\\Users\\student\\Desktop\\\uFF4C\uFF4C\uFF4C\\New\\Source\\Scene\\TitleScene.cpp",
               "RelativeToolTip": "Source\\Scene\\TitleScene.cpp",
-              "ViewState": "AQIAACIAAAAAAAAAAAAAAD8AAAARAAAA",
+              "ViewState": "AQIAACIAAAAAAAAAAAAAACwAAAAfAAAA",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000677|",
               "WhenOpened": "2026-05-18T06:16:18.125Z",
               "EditorCaption": ""
             },
             {
               "$type": "Document",
-              "DocumentIndex": 7,
+              "DocumentIndex": 8,
               "Title": "GameScene.cpp",
               "DocumentMoniker": "C:\\Users\\student\\Desktop\\\uFF4C\uFF4C\uFF4C\\New\\Source\\Scene\\GameScene.cpp",
               "RelativeDocumentMoniker": "Source\\Scene\\GameScene.cpp",
@@ -175,7 +175,7 @@
             },
             {
               "$type": "Document",
-              "DocumentIndex": 4,
+              "DocumentIndex": 9,
               "Title": "SceneManager.cpp",
               "DocumentMoniker": "C:\\Users\\student\\Desktop\\\uFF4C\uFF4C\uFF4C\\New\\Source\\Manager\\SceneManager.cpp",
               "RelativeDocumentMoniker": "Source\\Manager\\SceneManager.cpp",
@@ -187,7 +187,7 @@
             },
             {
               "$type": "Document",
-              "DocumentIndex": 3,
+              "DocumentIndex": 10,
               "Title": "DifficultySelectScene.cpp",
               "DocumentMoniker": "C:\\Users\\student\\Desktop\\\uFF4C\uFF4C\uFF4C\\New\\Source\\Scene\\DifficultySelectScene.cpp",
               "RelativeDocumentMoniker": "Source\\Scene\\DifficultySelectScene.cpp",
@@ -199,7 +199,7 @@
             },
             {
               "$type": "Document",
-              "DocumentIndex": 2,
+              "DocumentIndex": 11,
               "Title": "KeyHelper.cpp",
               "DocumentMoniker": "C:\\Users\\student\\Desktop\\\uFF4C\uFF4C\uFF4C\\New\\Source\\Common\\KeyHelper.cpp",
               "RelativeDocumentMoniker": "Source\\Common\\KeyHelper.cpp",
@@ -211,7 +211,7 @@
             },
             {
               "$type": "Document",
-              "DocumentIndex": 14,
+              "DocumentIndex": 12,
               "Title": "GameData.cpp",
               "DocumentMoniker": "C:\\Users\\student\\Desktop\\\uFF4C\uFF4C\uFF4C\\New\\Source\\Common\\GameData.cpp",
               "RelativeDocumentMoniker": "Source\\Common\\GameData.cpp",
@@ -223,7 +223,7 @@
             },
             {
               "$type": "Document",
-              "DocumentIndex": 8,
+              "DocumentIndex": 13,
               "Title": "TitleScene.h",
               "DocumentMoniker": "C:\\Users\\student\\Desktop\\\uFF4C\uFF4C\uFF4C\\New\\Source\\Scene\\TitleScene.h",
               "RelativeDocumentMoniker": "Source\\Scene\\TitleScene.h",
@@ -235,7 +235,7 @@
             },
             {
               "$type": "Document",
-              "DocumentIndex": 15,
+              "DocumentIndex": 14,
               "Title": "GameData.h",
               "DocumentMoniker": "C:\\Users\\student\\Desktop\\\uFF4C\uFF4C\uFF4C\\New\\Source\\Common\\GameData.h",
               "RelativeDocumentMoniker": "Source\\Common\\GameData.h",
@@ -247,7 +247,7 @@
             },
             {
               "$type": "Document",
-              "DocumentIndex": 5,
+              "DocumentIndex": 15,
               "Title": "main.cpp",
               "DocumentMoniker": "C:\\Users\\student\\Desktop\\\uFF4C\uFF4C\uFF4C\\New\\Source\\main.cpp",
               "RelativeDocumentMoniker": "Source\\main.cpp",
@@ -259,7 +259,7 @@
             },
             {
               "$type": "Document",
-              "DocumentIndex": 12,
+              "DocumentIndex": 4,
               "Title": "GameEffect.cpp",
               "DocumentMoniker": "C:\\Users\\student\\Desktop\\\uFF4C\uFF4C\uFF4C\\New\\Source\\Game\\GameEffect.cpp",
               "RelativeDocumentMoniker": "Source\\Game\\GameEffect.cpp",
