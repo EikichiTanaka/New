@@ -11,6 +11,7 @@ static const char* DEFAULT_TITLE = "見習い弾幕使い";
 struct SaveDataV1
 {
 	int highScore[4];
+
 	int scoreAttackBest[4];
 	bool achievements[(int)AchievementId::ACHIEVEMENT_COUNT];
 	char titles[64];

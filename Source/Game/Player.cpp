@@ -203,26 +203,25 @@ void Player::Draw()
 
 	bool slowMode = CheckHitKey(KEY_INPUT_LSHIFT) != 0 || CheckHitKey(KEY_INPUT_RSHIFT) != 0;
 
-	// エンジン噴射のトレイル（背面・加算）
-
+	// エンジン噴射のトレイル（無ライト・低セグメント）
 	SetDrawBlendMode(DX_BLENDMODE_ADD, 90);
 	VECTOR trailPos = VGet(m_X, PLAYER_Y, m_Z - 22.0f);
-	DrawSphere3D(trailPos, PLAYER_DRAW_SIZE * 0.75f, 10, bodyColor, bodyColor, FALSE);
+	DrawSphere3D(trailPos, PLAYER_DRAW_SIZE * 0.75f, 6, bodyColor, bodyColor, FALSE);
 	SetDrawBlendMode(DX_BLENDMODE_NOBLEND, 0);
 
-	DrawSphere3D(pos, PLAYER_DRAW_SIZE, 10, bodyColor, glowColor, TRUE);
+	DrawSphere3D(pos, PLAYER_DRAW_SIZE, 6, bodyColor, glowColor, FALSE);
 
 	if (IsFeverMode())
 	{
 		SetDrawBlendMode(DX_BLENDMODE_ADD, 120);
 		float auraRadius = PLAYER_DRAW_SIZE + 4.0f + sinf((float)GetNowCount() / 100.0f) * 2.0f;
-		DrawSphere3D(pos, auraRadius, 10, GetColor(255, 215, 0), GetColor(255, 215, 0), FALSE);
+		DrawSphere3D(pos, auraRadius, 6, GetColor(255, 215, 0), GetColor(255, 215, 0), FALSE);
 		SetDrawBlendMode(DX_BLENDMODE_NOBLEND, 0);
 	}
 
 	if (slowMode && (m_PracticeMode || m_ScoreAttackMode))
 	{
-		DrawSphere3D(pos, PLAYER_HITBOX, 10, GetColor(255, 255, 255), GetColor(255, 255, 255), FALSE);
+		DrawSphere3D(pos, PLAYER_HITBOX, 6, GetColor(255, 255, 255), GetColor(255, 255, 255), FALSE);
 	}
 }
 
