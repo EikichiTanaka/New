@@ -97,16 +97,20 @@ constexpr int   SPATIAL_GRID_COLS        = 12;
 constexpr int   SPATIAL_GRID_ROWS        = 16;
 constexpr int   SHOW_FPS           = 1;
 
-// 描画・弾幕負荷調整（弾は3D球のまま・ライト計算は敵弾のみ省略）
-constexpr int   BULLET_DRAW_SEG_ENEMY       = 4;
-constexpr int   BULLET_DRAW_SEG_PLAYER      = 6;
-constexpr float BULLET_DRAW_CULL_DIST_Z     = 420.0f;
-constexpr float BULLET_DRAW_CULL_DIST_X     = 420.0f;
-constexpr int   EFFECT_MAX_DRAW_PARTICLES   = 28;
-constexpr int   EFFECT_STAR_DRAW_MAX        = 24;
-constexpr int   FIELD_GRID_SPACING          = 120;
-constexpr int   WAVE_DANMAKU_FRAME_INTERVAL = 3;
-constexpr int   ENEMY_HP_BAR_DRAW_INTERVAL  = 3;
+// 軽量3D敵弾（無ライト・低セグ・自機基準XZカリング）
+constexpr int   FIELD_GRID_SPACING            = 160;
+constexpr int   BULLET_DRAW_SEG_ENEMY         = 4;
+constexpr int   BULLET_DRAW_SEG_PLAYER        = 6;
+constexpr float BULLET_DRAW_CULL_DIST_Z       = 420.0f;
+constexpr float BULLET_DRAW_CULL_DIST_X       = 420.0f;
+
+// ウェーブ開始直後は弾を出さない／間隔を空けて同時弾数を抑える
+constexpr int   WAVE_SPAWN_DELAY_FRAMES       = 120;
+constexpr int   WAVE_DANMAKU_WARMUP_FRAMES    = 120;
+constexpr int   WAVE_DANMAKU_FRAME_INTERVAL   = 4;
+
+constexpr int   EFFECT_MAX_DRAW_PARTICLES     = 28;
+constexpr int   EFFECT_STAR_DRAW_MAX          = 24;
 constexpr int   EXPLOSION_PARTICLE_COUNT    = 8;
 constexpr int   GRAZE_SPARK_COUNT           = 2;
 

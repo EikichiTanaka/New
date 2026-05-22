@@ -6,7 +6,7 @@
 #include "GameConfig.h"
 #include "DxLib.h"
 
-static const int ROW_COUNT = 7;
+static const int ROW_COUNT = 6;
 
 void OptionsScene::Init()
 {
@@ -39,7 +39,6 @@ SceneType OptionsScene::Update()
 	}
 
 	const float stepVol = 0.05f;
-	const float stepAlpha = 0.05f;
 
 	if (KeyHelper::IsTrigger(KEY_INPUT_LEFT) || KeyHelper::IsTrigger(KEY_INPUT_RIGHT))
 	{
@@ -72,14 +71,6 @@ SceneType OptionsScene::Update()
 			m_NeedGraphicsApply = true;
 			break;
 		case 4:
-		{
-			float a = g_Options.bulletAlpha + dir * stepAlpha;
-			if (a < 0.25f) a = 0.25f;
-			if (a > 1.0f) a = 1.0f;
-			g_Options.bulletAlpha = a;
-			break;
-		}
-		case 5:
 			g_Options.hitStopEnabled = !g_Options.hitStopEnabled;
 			break;
 		default:
@@ -106,7 +97,6 @@ void OptionsScene::Draw()
 		"BGM音量",
 		"フルスクリーン",
 		"解像度",
-		"弾の透明度",
 		"ヒットストップ",
 		"（ESCで保存して戻る）"
 	};
@@ -119,7 +109,7 @@ void OptionsScene::Draw()
 	{
 		int rowY = 120 + i * 52;
 		bool sel = (i == m_CursorRow);
-		if (sel && i < 6)
+		if (sel && i < 5)
 		{
 			SetDrawBlendMode(DX_BLENDMODE_ALPHA, 80);
 			DrawBox(cx - 380, rowY - 6, cx + 380, rowY + 36, GetColor(0, 60, 90), TRUE);
@@ -130,7 +120,7 @@ void OptionsScene::Draw()
 		SetFontSize(22);
 		DrawTextUtf8(cx - 320, rowY, GetColor(200, 200, 220), labels[i]);
 
-		if (i >= 6) continue;
+		if (i >= 5) continue;
 
 		SetFontSize(24);
 		unsigned int vc = sel ? GetColor(255, 255, 255) : GetColor(0, 255, 200);
@@ -140,8 +130,7 @@ void OptionsScene::Draw()
 		case 1: sprintf_s(valBuf, "%d%%", (int)(g_Options.bgmVolume * 100)); break;
 		case 2: sprintf_s(valBuf, "%s", g_Options.fullscreen ? "ON" : "OFF"); break;
 		case 3: sprintf_s(valBuf, "%dx%d", g_Options.resWidth, g_Options.resHeight); break;
-		case 4: sprintf_s(valBuf, "%d%%", (int)(g_Options.bulletAlpha * 100)); break;
-		case 5: sprintf_s(valBuf, "%s", g_Options.hitStopEnabled ? "ON" : "OFF"); break;
+		case 4: sprintf_s(valBuf, "%s", g_Options.hitStopEnabled ? "ON" : "OFF"); break;
 		default: valBuf[0] = 0; break;
 		}
 		DrawFormatString(cx + 80, rowY, vc, "%s", valBuf);

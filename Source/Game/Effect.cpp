@@ -1,5 +1,4 @@
 ﻿#include "Game/Effect.h"
-#include "GameConfig.h"
 #include "Common/GameScreen.h"
 #include "DxLib.h"
 #include <cmath>
@@ -11,48 +10,49 @@ void Effect::Init()
 	m_BombTimer = 0;
 	m_BombX = m_BombY = m_BombZ = 0.0f;
 
-	for (int i = 0; i < PARTICLE_MAX; i++)
-		m_Particles[i].active = false;
+	m_ParticlePool.Init();
 
+	const int sw = SCREEN_WIDTH > 0 ? SCREEN_WIDTH : DESIGN_SCREEN_WIDTH;
+	const int sh = SCREEN_HEIGHT > 0 ? SCREEN_HEIGHT : DESIGN_SCREEN_HEIGHT;
 	for (int i = 0; i < STAR_MAX; i++)
 	{
-		m_Stars[i].x = (float)(GetRand(1000) - 500);
-		m_Stars[i].y = (float)(GetRand(250) - 100);
-		m_Stars[i].z = (float)(GetRand(1200) - 600);
-		m_Stars[i].speed = 12.0f + (float)GetRand(80) / 10.0f;
+		m_Stars[i].screenX = (float)(GetRand(sw));
+		m_Stars[i].screenY = (float)(GetRand(sh));
+		m_Stars[i].speed = 1.2f + (float)GetRand(25) / 10.0f;
 		int brightness = 80 + GetRand(175);
-		m_Stars[i].color = GetColor(brightness, brightness, brightness);
+		m_Stars[i].color = GetColor(brightness, brightness, brightness + 20);
 	}
 }
 
 void Effect::Update()
 {
+	const float h = (float)SCREEN_HEIGHT;
+	const float w = (float)SCREEN_WIDTH;
 	for (int i = 0; i < STAR_MAX; i++)
 	{
-		m_Stars[i].z -= m_Stars[i].speed;
-		if (m_Stars[i].z < -650.0f)
+		m_Stars[i].screenY += m_Stars[i].speed;
+		if (m_Stars[i].screenY > h)
 		{
-			m_Stars[i].x = (float)(GetRand(1000) - 500);
-			m_Stars[i].y = (float)(GetRand(250) - 100);
-			m_Stars[i].z = 600.0f;
-			m_Stars[i].speed = 12.0f + (float)GetRand(80) / 10.0f;
+			m_Stars[i].screenY = 0.0f;
+			m_Stars[i].screenX = (float)(GetRand((int)w));
+			m_Stars[i].speed = 1.2f + (float)GetRand(25) / 10.0f;
 		}
 	}
 
-	for (int i = 0; i < PARTICLE_MAX; i++)
+	for (int li = m_ParticlePool.GetActiveCount() - 1; li >= 0; li--)
 	{
-		if (!m_Particles[i].active)
-			continue;
+		const int idx = m_ParticlePool.GetActiveIndex(li);
+		Particle& p = m_ParticlePool.GetSlots()[idx];
 
-		m_Particles[i].x += m_Particles[i].vx;
-		m_Particles[i].y += m_Particles[i].vy;
-		m_Particles[i].z += m_Particles[i].vz;
-		m_Particles[i].vx *= 0.94f;
-		m_Particles[i].vy *= 0.94f;
-		m_Particles[i].vz *= 0.94f;
-		m_Particles[i].life--;
-		if (m_Particles[i].life <= 0)
-			m_Particles[i].active = false;
+		p.x += p.vx;
+		p.y += p.vy;
+		p.z += p.vz;
+		p.vx *= 0.94f;
+		p.vy *= 0.94f;
+		p.vz *= 0.94f;
+		p.life--;
+		if (p.life <= 0)
+			m_ParticlePool.Release(idx);
 	}
 
 	if (m_BombActive)
@@ -69,23 +69,10 @@ void Effect::Update()
 
 void Effect::Draw() const
 {
-	const int cx = SCREEN_WIDTH / 2;
-	const int cy = SCREEN_HEIGHT / 4;
-
-	SetDrawBlendMode(DX_BLENDMODE_ADD, 200);
+	SetDrawBlendMode(DX_BLENDMODE_ADD, 180);
 	const int starDrawMax = EFFECT_STAR_DRAW_MAX < STAR_MAX ? EFFECT_STAR_DRAW_MAX : STAR_MAX;
 	for (int i = 0; i < starDrawMax; i++)
-	{
-		float depth = (m_Stars[i].z + 650.0f) / 1250.0f;
-		if (depth < 0.04f || depth > 1.0f)
-			continue;
-
-		float scale = 0.35f + depth * 0.55f;
-		int sx = cx + (int)(m_Stars[i].x * scale);
-		int sy = cy + (int)(m_Stars[i].y * 0.35f);
-		int r = 1 + (int)((1.0f - depth) * 2.0f);
-		DrawCircle(sx, sy, r, m_Stars[i].color, TRUE);
-	}
+		DrawCircleAA((int)m_Stars[i].screenX, (int)m_Stars[i].screenY, 1.8f, 2, m_Stars[i].color, TRUE);
 
 	if (m_BombActive)
 	{
@@ -96,14 +83,13 @@ void Effect::Draw() const
 		DrawSphere3D(center, m_BombRadius, 8, GetColor(0, 255, 255), GetColor(0, 255, 255), FALSE);
 	}
 
-	int drawn = 0;
 	int lastAlpha = -1;
-	for (int i = 0; i < PARTICLE_MAX && drawn < EFFECT_MAX_DRAW_PARTICLES; i++)
+	int particlesDrawn = 0;
+	for (int li = 0; li < m_ParticlePool.GetActiveCount() && particlesDrawn < EFFECT_MAX_DRAW_PARTICLES; li++)
 	{
-		if (!m_Particles[i].active)
-			continue;
+		const Particle& p = m_ParticlePool.GetSlots()[m_ParticlePool.GetActiveIndex(li)];
 
-		float lifeRatio = (float)m_Particles[i].life / (float)m_Particles[i].maxLife;
+		float lifeRatio = (float)p.life / (float)p.maxLife;
 		int alpha = (int)(255.0f * lifeRatio);
 		if (alpha != lastAlpha)
 		{
@@ -111,13 +97,13 @@ void Effect::Draw() const
 			lastAlpha = alpha;
 		}
 
-		VECTOR sp = ConvWorldPosToScreenPos(VGet(m_Particles[i].x, m_Particles[i].y, m_Particles[i].z));
+		VECTOR sp = ConvWorldPosToScreenPos(VGet(p.x, p.y, p.z));
 		if (sp.z < 0.0f || sp.z > 1.0f)
 			continue;
-		int r = (int)(m_Particles[i].radius * (1.5f - sp.z * 0.35f));
+		int r = (int)(p.radius * (1.5f - sp.z * 0.35f));
 		if (r < 2) r = 2;
-		DrawCircle((int)sp.x, (int)sp.y, r, m_Particles[i].color, TRUE);
-		drawn++;
+		DrawCircle((int)sp.x, (int)sp.y, r, p.color, TRUE);
+		particlesDrawn++;
 	}
 
 	SetDrawBlendMode(DX_BLENDMODE_NOBLEND, 0);
@@ -127,77 +113,81 @@ void Effect::AddExplosion(float x, float y, float z, unsigned int color, int cou
 {
 	if (count <= 0)
 		count = EXPLOSION_PARTICLE_COUNT;
+
 	int spawned = 0;
-	for (int i = 0; i < PARTICLE_MAX && spawned < count; i++)
+	while (spawned < count)
 	{
-		if (!m_Particles[i].active)
-		{
-			m_Particles[i].x = x;
-			m_Particles[i].y = y;
-			m_Particles[i].z = z;
+		Particle* p = m_ParticlePool.Acquire();
+		if (p == nullptr)
+			break;
 
-			float phi = ((float)GetRand(360) * 3.14159f) / 180.0f;
-			float theta = ((float)GetRand(180) * 3.14159f) / 180.0f;
-			float speed = 3.5f + (float)GetRand(60) / 10.0f;
+		p->x = x;
+		p->y = y;
+		p->z = z;
 
-			m_Particles[i].vx = sinf(theta) * cosf(phi) * speed;
-			m_Particles[i].vy = sinf(theta) * sinf(phi) * speed * 0.2f;
-			m_Particles[i].vz = cosf(theta) * speed;
+		float phi = ((float)GetRand(360) * 3.14159f) / 180.0f;
+		float theta = ((float)GetRand(180) * 3.14159f) / 180.0f;
+		float speed = 3.5f + (float)GetRand(60) / 10.0f;
 
-			m_Particles[i].radius = 2.5f + (float)GetRand(25) / 10.0f;
-			m_Particles[i].maxLife = 25 + GetRand(20);
-			m_Particles[i].life = m_Particles[i].maxLife;
-			m_Particles[i].color = color;
-			m_Particles[i].active = true;
-			spawned++;
-		}
+		p->vx = sinf(theta) * cosf(phi) * speed;
+		p->vy = sinf(theta) * sinf(phi) * speed * 0.2f;
+		p->vz = cosf(theta) * speed;
+
+		p->radius = 2.5f + (float)GetRand(25) / 10.0f;
+		p->maxLife = 25 + GetRand(20);
+		p->life = p->maxLife;
+		p->color = color;
+		p->active = true;
+		spawned++;
 	}
 }
 
 void Effect::AddGrazeSpark(float x, float y, float z)
 {
 	int spawned = 0;
-	int count = GRAZE_SPARK_COUNT;
-	for (int i = 0; i < PARTICLE_MAX && spawned < count; i++)
+	const int count = GRAZE_SPARK_COUNT;
+	while (spawned < count)
 	{
-		if (!m_Particles[i].active)
-		{
-			m_Particles[i].x = x;
-			m_Particles[i].y = y;
-			m_Particles[i].z = z;
-			m_Particles[i].vx = (float)(GetRand(80) - 40) / 10.0f;
-			m_Particles[i].vy = (float)(GetRand(10) - 5) / 10.0f;
-			m_Particles[i].vz = -2.0f - (float)GetRand(40) / 10.0f;
-			m_Particles[i].radius = 1.5f + (float)GetRand(10) / 10.0f;
-			m_Particles[i].maxLife = 10 + GetRand(10);
-			m_Particles[i].life = m_Particles[i].maxLife;
-			m_Particles[i].color = GetColor(0, 255, 255);
-			m_Particles[i].active = true;
-			spawned++;
-		}
+		Particle* p = m_ParticlePool.Acquire();
+		if (p == nullptr)
+			break;
+
+		p->x = x;
+		p->y = y;
+		p->z = z;
+		p->vx = (float)(GetRand(80) - 40) / 10.0f;
+		p->vy = (float)(GetRand(10) - 5) / 10.0f;
+		p->vz = -2.0f - (float)GetRand(40) / 10.0f;
+		p->radius = 1.5f + (float)GetRand(10) / 10.0f;
+		p->maxLife = 10 + GetRand(10);
+		p->life = p->maxLife;
+		p->color = GetColor(0, 255, 255);
+		p->active = true;
+		spawned++;
 	}
 }
 
 void Effect::AddItemSparkle(float x, float y, float z, unsigned int color)
 {
 	int spawned = 0;
-	for (int i = 0; i < PARTICLE_MAX && spawned < 3; i++)
+	while (spawned < 3)
 	{
-		if (!m_Particles[i].active)
-		{
-			m_Particles[i].x = x;
-			m_Particles[i].y = y;
-			m_Particles[i].z = z;
-			m_Particles[i].vx = (float)(GetRand(60) - 30) / 10.0f;
-			m_Particles[i].vy = (float)(GetRand(40) - 20) / 10.0f;
-			m_Particles[i].vz = (float)(GetRand(60) - 30) / 10.0f;
-			m_Particles[i].radius = 1.0f + (float)GetRand(8) / 10.0f;
-			m_Particles[i].maxLife = 8 + GetRand(8);
-			m_Particles[i].life = m_Particles[i].maxLife;
-			m_Particles[i].color = color;
-			m_Particles[i].active = true;
-			spawned++;
-		}
+		Particle* p = m_ParticlePool.Acquire();
+		if (p == nullptr)
+			break;
+
+		p->x = x;
+		p->y = y;
+		p->z = z;
+		p->vx = (float)(GetRand(60) - 30) / 10.0f;
+		p->vy = (float)(GetRand(40) - 20) / 10.0f;
+		p->vz = (float)(GetRand(60) - 30) / 10.0f;
+		p->radius = 1.0f + (float)GetRand(8) / 10.0f;
+		p->maxLife = 8 + GetRand(8);
+		p->life = p->maxLife;
+		p->color = color;
+		p->active = true;
+		spawned++;
 	}
 }
 

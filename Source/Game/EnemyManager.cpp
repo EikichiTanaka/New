@@ -66,7 +66,7 @@ void EnemyManager::ConfigureStage(StageStart stage, PlayMode mode, int stageChap
 		return;
 	}
 	m_WaveIndex = StageStartToWaveIndex(stage);
-	m_WaveTimer = 70;
+	m_WaveTimer = WAVE_SPAWN_DELAY_FRAMES;
 	m_WaveDanmakuTimer = 0;
 }
 
@@ -314,6 +314,8 @@ void EnemyManager::UpdateWaveDanmaku(float playerX, float playerZ, BulletManager
 	if (m_BossActive || m_AllWavesComplete || m_WaveTimer > 0) return;
 
 	m_WaveDanmakuTimer++;
+	if (m_WaveDanmakuTimer < WAVE_DANMAKU_WARMUP_FRAMES)
+		return;
 	if ((m_WaveDanmakuTimer % WAVE_DANMAKU_FRAME_INTERVAL) != 0)
 		return;
 
@@ -338,24 +340,20 @@ void EnemyManager::UpdateWaveDanmaku(float playerX, float playerZ, BulletManager
 	switch (m_WaveIndex)
 	{
 	case 0:
-		if (m_WaveDanmakuTimer % 36 == 0)
-			ringBurst(10, 0.95f, GetColor(255, 80, 180), (float)m_WaveDanmakuTimer * 0.035f);
-		if (m_WaveDanmakuTimer % 10 == 0)
+		if (m_WaveDanmakuTimer % 48 == 0)
+			ringBurst(8, 0.95f, GetColor(255, 80, 180), (float)m_WaveDanmakuTimer * 0.035f);
+		if (m_WaveDanmakuTimer % 18 == 0)
 		{
-			for (int side = -1; side <= 1; side += 2)
-			{
-				bullets.AddEnemyBullet(side * 360.0f, PLAYER_Y, FIELD_HALF_D - 40.0f,
-					0.0f, 0.0f, -spd * 1.05f, smallR, GetColor(0, 220, 255));
-				bullets.AddEnemyBullet(side * 280.0f, PLAYER_Y, FIELD_HALF_D - 80.0f,
-					side * 0.4f, 0.0f, -spd, smallR, GetColor(120, 255, 255));
-			}
+			const int side = (m_WaveDanmakuTimer / 18) % 2 == 0 ? -1 : 1;
+			bullets.AddEnemyBullet(side * 320.0f, PLAYER_Y, FIELD_HALF_D - 50.0f,
+				side * 0.25f, 0.0f, -spd, smallR, GetColor(0, 220, 255));
 		}
 		break;
 
 	case 1:
-		if (m_WaveDanmakuTimer % 28 == 0)
-			ringBurst(14, 0.88f, GetColor(255, 200, 60), (float)m_WaveDanmakuTimer * 0.06f);
-		if (m_WaveDanmakuTimer % 32 == 0)
+		if (m_WaveDanmakuTimer % 36 == 0)
+			ringBurst(12, 0.88f, GetColor(255, 200, 60), (float)m_WaveDanmakuTimer * 0.06f);
+		if (m_WaveDanmakuTimer % 48 == 0)
 		{
 			float dx = playerX - emitX;
 			float dz = playerZ - emitZ;
@@ -364,7 +362,7 @@ void EnemyManager::UpdateWaveDanmaku(float playerX, float playerZ, BulletManager
 			{
 				float ndx = dx / dist;
 				float ndz = dz / dist;
-				for (int n = -2; n <= 2; n++)
+				for (int n = -1; n <= 1; n++)
 				{
 					float off = (float)n * 0.12f;
 					float vx = ndx * cosf(off) - ndz * sinf(off);
@@ -378,29 +376,27 @@ void EnemyManager::UpdateWaveDanmaku(float playerX, float playerZ, BulletManager
 		break;
 
 	case 2:
-		if (m_WaveDanmakuTimer % 12 == 0)
+		if (m_WaveDanmakuTimer % 18 == 0)
 		{
 			float a1 = (float)m_WaveDanmakuTimer * 0.14f;
 			float a2 = a1 + pi;
 			bullets.AddEnemyBullet(emitX, PLAYER_Y, emitZ, cosf(a1) * spd, 0.0f, sinf(a1) * spd, smallR, GetColor(255, 120, 255));
 			bullets.AddEnemyBullet(emitX, PLAYER_Y, emitZ, cosf(a2) * spd, 0.0f, sinf(a2) * spd, smallR, GetColor(255, 120, 255));
-			bullets.AddEnemyBullet(-emitX, PLAYER_Y, emitZ, cosf(a1 + 0.5f) * spd, 0.0f, sinf(a1 + 0.5f) * spd, smallR, GetColor(200, 80, 255));
-			bullets.AddEnemyBullet(-emitX, PLAYER_Y, emitZ, cosf(a2 + 0.5f) * spd, 0.0f, sinf(a2 + 0.5f) * spd, smallR, GetColor(200, 80, 255));
 		}
-		if (m_WaveDanmakuTimer % 52 == 0)
-			ringBurst(16, 0.75f, GetColor(255, 0, 120), (float)m_WaveDanmakuTimer * 0.02f);
+		if (m_WaveDanmakuTimer % 60 == 0)
+			ringBurst(14, 0.75f, GetColor(255, 0, 120), (float)m_WaveDanmakuTimer * 0.02f);
 		break;
 
 	case 3:
-		if (m_WaveDanmakuTimer % 8 == 0)
+		if (m_WaveDanmakuTimer % 14 == 0)
 		{
 			float rx = (float)(GetRand(700) - 350);
 			bullets.AddEnemyBullet(rx, PLAYER_Y, FIELD_HALF_D + 30.0f,
 				0.0f, 0.0f, -spd * 1.15f, smallR * 0.9f, GetColor(0, 255, 220));
 		}
-		if (m_WaveDanmakuTimer % 34 == 0)
-			ringBurst(18, 0.82f, GetColor(255, 50, 255), (float)m_WaveDanmakuTimer * 0.045f);
-		if (m_WaveDanmakuTimer % 16 == 0)
+		if (m_WaveDanmakuTimer % 42 == 0)
+			ringBurst(14, 0.82f, GetColor(255, 50, 255), (float)m_WaveDanmakuTimer * 0.045f);
+		if (m_WaveDanmakuTimer % 22 == 0)
 		{
 			for (int lane = -2; lane <= 2; lane++)
 			{
@@ -414,7 +410,7 @@ void EnemyManager::UpdateWaveDanmaku(float playerX, float playerZ, BulletManager
 		break;
 	}
 
-	if (m_StageChapter >= 1 && m_WaveDanmakuTimer % 20 == 0)
+	if (m_StageChapter >= 1 && m_WaveDanmakuTimer % 36 == 0)
 	{
 		float twist = (float)m_WaveDanmakuTimer * 0.08f;
 		float lane = (float)((GetRand(1000) % 7) - 3) * 70.0f;
@@ -450,9 +446,9 @@ void EnemyManager::UpdateBoss(float playerX, float playerZ, BulletManager& bulle
 		int interval = 22 + fireIntervalScale * 6;
 		if (m_BossTimer % interval == 0)
 		{
-			int count = 20;
-			if (m_Difficulty == Difficulty::Easy) count = 14;
-			if (m_Difficulty == Difficulty::Hard) count = 26;
+			int count = 24;
+			if (m_Difficulty == Difficulty::Easy) count = 16;
+			if (m_Difficulty == Difficulty::Hard) count = 30;
 
 			float offsetAngle = (m_BossTimer * 0.055f);
 			for (int i = 0; i < count; i++)
@@ -486,7 +482,7 @@ void EnemyManager::UpdateBoss(float playerX, float playerZ, BulletManager& bulle
 	}
 	else if (m_BossPhase == 1)
 	{
-		if (m_BossTimer % (3 + fireIntervalScale) == 0)
+		if (m_BossTimer % (2 + fireIntervalScale) == 0)
 		{
 			float angle1 = (float)m_BossTimer * 0.13f;
 			float angle2 = angle1 + 3.14159265f;
@@ -517,7 +513,7 @@ void EnemyManager::UpdateBoss(float playerX, float playerZ, BulletManager& bulle
 	}
 	else if (m_BossPhase == 2)
 	{
-		if (m_BossTimer % 6 == 0)
+		if (m_BossTimer % 4 == 0)
 		{
 			float rx = (float)(GetRand(800) - 400);
 			bullets.AddEnemyBullet(rx, m_BossY, FIELD_HALF_D + 50.0f,
@@ -527,9 +523,9 @@ void EnemyManager::UpdateBoss(float playerX, float playerZ, BulletManager& bulle
 		int radialInterval = 18 + fireIntervalScale * 6;
 		if (m_BossTimer % radialInterval == 0)
 		{
-			int count = 22;
-			if (m_Difficulty == Difficulty::Easy) count = 16;
-			if (m_Difficulty == Difficulty::Hard) count = 28;
+			int count = 32;
+			if (m_Difficulty == Difficulty::Easy) count = 22;
+			if (m_Difficulty == Difficulty::Hard) count = 40;
 
 			for (int i = 0; i < count; i++)
 			{

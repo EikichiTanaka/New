@@ -7,19 +7,16 @@
 #include "Common/GameOptions.h"
 #include "Common/BgmPlayer.h"
 #include "Common/KeyHelper.h"
+#include "Common/UiDraw.h"
+#include "Common/GameScreen.h"
 #include "Game/Collision.h"
-#include "Game/SpatialGrid.h"
 #include "DxLib.h"
 #include <cmath>
-
-using EnemySpatialGrid = SpatialGridXZ<SPATIAL_GRID_COLS, SPATIAL_GRID_ROWS, ENEMY_MAX>;
-using EnemyBulletSpatialGrid = SpatialGridXZ<SPATIAL_GRID_COLS, SPATIAL_GRID_ROWS, EBULLET_MAX>;
 
 // --- Init: ゲームシーン全体の初期化 ---
 void GameScene::Init()
 {
 	m_FrameCount = 0;
-	m_GameEnded = false;
 	m_ClearDelayTimer = 0;
 
 	m_Paused = false;
@@ -55,7 +52,6 @@ void GameScene::Init()
 	SetLightAmbColorHandle(m_DirLightHandle, GetColorF(0.18f, 0.20f, 0.28f, 1.0f));
 	SetLightEnableHandle(m_DirLightHandle, TRUE);
 
-	// プレイヤー追従のメインライト（自機のすぐ上）
 	m_PlayerLightHandle = CreatePointLightHandle(
 		VGet(PLAYER_START_X, PLAYER_Y + 58.0f, PLAYER_START_Z - 70.0f),
 		820.0f, 1.0f, 0.000045f, 0.0f);
@@ -64,7 +60,6 @@ void GameScene::Init()
 	SetLightSpcColorHandle(m_PlayerLightHandle, GetColorF(1.0f, 1.0f, 1.0f, 1.0f));
 	SetLightEnableHandle(m_PlayerLightHandle, TRUE);
 
-	// 自機前方（弾が進む方向）のフィルライト
 	m_ForwardLightHandle = CreatePointLightHandle(
 		VGet(PLAYER_START_X, PLAYER_Y + 42.0f, PLAYER_START_Z + 200.0f),
 		760.0f, 1.0f, 0.00005f, 0.0f);
@@ -231,12 +226,12 @@ void GameScene::SetupSceneLighting()
 	SetMaterialUseVertSpcColor(FALSE);
 	SetGlobalAmbientLight(GetColorF(0.40f, 0.44f, 0.54f, 1.0f));
 
+	float px = m_Player.GetX();
+	float py = m_Player.GetY();
+	float pz = m_Player.GetZ();
+
 	if ((m_FrameCount & 1) == 0)
 	{
-		float px = m_Player.GetX();
-		float py = m_Player.GetY();
-		float pz = m_Player.GetZ();
-
 		SetLightPositionHandle(m_PlayerLightHandle,
 			VGet(px, py + 58.0f, pz - 75.0f));
 		SetLightPositionHandle(m_ForwardLightHandle,
@@ -266,7 +261,6 @@ void GameScene::Draw()
 
 	SetupCamera();
 
-	// 3Dオブジェクトはライティング有効で描画
 	SetupSceneLighting();
 	DrawField();
 	m_Player.Draw();
@@ -275,6 +269,7 @@ void GameScene::Draw()
 	DrawItems();
 	DisableSceneLighting();
 	m_Bullets.DrawEnemiesUnlit();
+	BeginScreenSpaceDraw();
 	m_Effect.Draw();
 
 	DrawHud();
@@ -284,6 +279,7 @@ void GameScene::Draw()
 
 void GameScene::DrawPauseOverlay()
 {
+	BeginScreenSpaceDraw();
 	SetDrawBlendMode(DX_BLENDMODE_ALPHA, 170);
 	DrawBox(0, 0, SCREEN_WIDTH, SCREEN_HEIGHT, GetColor(0, 0, 0), TRUE);
 	SetDrawBlendMode(DX_BLENDMODE_NOBLEND, 0);
@@ -348,6 +344,7 @@ void GameScene::DrawBossIntroOverlay() const
 {
 	if (!m_Enemies.IsBossIntroActive()) return;
 
+	BeginScreenSpaceDraw();
 	int t = m_Enemies.GetBossIntroTimer();
 	float pulse = 0.5f + 0.5f * sinf((float)t * 0.12f);
 	int a = (int)(120 + pulse * 80);
@@ -436,28 +433,21 @@ void GameScene::DrawField()
 	float halfW = FIELD_WIDTH / 2.0f;
 	float halfD = FIELD_DEPTH / 2.0f;
 
-	// 床面キューブ（ライトで明るさが付く）
+	// 床面（単色・ライトOFF）
 	VECTOR floorMin = VGet(-halfW, -4.0f, -halfD);
 	VECTOR floorMax = VGet(halfW, 0.0f, halfD);
-	DrawCube3D(floorMin, floorMax,
-		GetColor(28, 52, 78),
-		GetColor(45, 85, 120),
-		TRUE);
+	unsigned int floorCol = GetColor(32, 58, 88);
+	DrawCube3D(floorMin, floorMax, floorCol, floorCol, FALSE);
 
-	// グリッド線はライト非影響のため描画前にライトを一時OFF
 	DisableSceneLighting();
 
 	int gridColor = GetColor(0, 90, 50);
 	float gridSpacing = (float)FIELD_GRID_SPACING;
 
 	for (float z = -halfD; z <= halfD; z += gridSpacing)
-	{
 		DrawLine3D(VGet(-halfW, 0.2f, z), VGet(halfW, 0.2f, z), gridColor);
-	}
 	for (float x = -halfW; x <= halfW; x += gridSpacing)
-	{
 		DrawLine3D(VGet(x, 0.2f, -halfD), VGet(x, 0.2f, halfD), gridColor);
-	}
 
 	int borderColor = GetColor(0, 255, 120);
 	DrawLine3D(VGet(-halfW, 0.2f, -halfD), VGet(halfW, 0.2f, -halfD), borderColor);
@@ -483,9 +473,73 @@ void GameScene::ExecuteBomb()
 	}
 }
 
+// --- CheckItemCollisions: 自機 vs アイテム回収 ---
+void GameScene::CheckItemCollisions()
+{
+	const float px = m_Player.GetX();
+	const float pz = m_Player.GetZ();
+
+	for (int i = 0; i < ITEM_MAX; i++)
+	{
+		if (!m_Items[i].active)
+			continue;
+
+		float dx = px - m_Items[i].x;
+		float dz = pz - m_Items[i].z;
+		float dist = sqrtf(dx * dx + dz * dz);
+
+		bool pocCollect = pz > 100.0f;
+
+		if (dist < 180.0f || pocCollect)
+		{
+			float pullSpeed = 4.5f;
+			if (pocCollect) pullSpeed = 7.5f;
+
+			if (dist > 0.01f)
+			{
+				m_Items[i].vx += (dx / dist) * pullSpeed * 0.15f;
+				m_Items[i].vz += (dz / dist) * pullSpeed * 0.15f;
+			}
+		}
+
+		if (dist < 18.0f)
+		{
+			m_Items[i].active = false;
+
+			if (m_Items[i].type == 0)
+			{
+				m_Player.AddScore(500);
+				m_Effect.AddItemSparkle(m_Items[i].x, PLAYER_Y, m_Items[i].z, GetColor(0, 255, 255));
+			}
+			else if (m_Items[i].type == 1)
+			{
+				m_Player.SetBombCount(m_Player.GetBombCount() + 1);
+				m_Effect.AddItemSparkle(m_Items[i].x, PLAYER_Y, m_Items[i].z, GetColor(255, 200, 50));
+			}
+			else if (m_Items[i].type == 2)
+			{
+				m_Player.AddScore(SPELL_BONUS_SCORE);
+				g_GameData.spellBonusCollected++;
+				g_GameData.scoreMultiplier += 0.03f;
+				m_Effect.AddItemSparkle(m_Items[i].x, PLAYER_Y, m_Items[i].z, GetColor(255, 120, 255));
+			}
+
+			SoundSynth::PlayPaddleBounce();
+		}
+	}
+}
+
 // --- CheckCollisions: 3D球体衝突およびグレイズ判定 ---
 void GameScene::CheckCollisions()
 {
+	const int activePB = m_Bullets.GetActivePlayerBulletCount();
+	const int activeEB = m_Bullets.GetActiveEnemyBulletCount();
+	if (activePB == 0 && activeEB == 0)
+	{
+		CheckItemCollisions();
+		return;
+	}
+
 	Bullet* pBullets = m_Bullets.GetPlayerBulletsMutable();
 
 	Enemy* pEnemies = m_Enemies.GetEnemies();
@@ -493,21 +547,18 @@ void GameScene::CheckCollisions()
 
 	Bullet* enemyBullets = m_Bullets.GetEnemyBullets();
 
-	EnemySpatialGrid enemyGrid;
-	enemyGrid.Clear();
+	m_EnemyGrid.Clear();
 	for (int j = 0; j < maxEnemies; j++)
 	{
 		if (pEnemies[j].IsActive())
-			enemyGrid.Insert(j, pEnemies[j].GetX(), pEnemies[j].GetZ());
+			m_EnemyGrid.Insert(j, pEnemies[j].GetX(), pEnemies[j].GetZ());
 	}
 
-	EnemyBulletSpatialGrid enemyBulletGrid;
-	enemyBulletGrid.Clear();
-	const int activeEB = m_Bullets.GetActiveEnemyBulletCount();
+	m_EnemyBulletGrid.Clear();
 	for (int li = 0; li < activeEB; li++)
 	{
 		const int bi = m_Bullets.GetActiveEnemyBulletSlot(li);
-		enemyBulletGrid.Insert(bi, enemyBullets[bi].x, enemyBullets[bi].z);
+		m_EnemyBulletGrid.Insert(bi, enemyBullets[bi].x, enemyBullets[bi].z);
 	}
 
 	int hitSparkles = 0;
@@ -533,7 +584,6 @@ void GameScene::CheckCollisions()
 	};
 
 	// 自機弾 vs 敵（ボス/中ボスは近傍のみ・雑魚は空間分割）
-	const int activePB = m_Bullets.GetActivePlayerBulletCount();
 	for (int li = 0; li < activePB; li++)
 	{
 		const int i = m_Bullets.GetActivePlayerBulletSlot(li);
@@ -609,7 +659,7 @@ void GameScene::CheckCollisions()
 			}
 		}
 
-		enemyGrid.ForEachNear(bx, bz, br + bulletEnemyQueryPad, [&](int j)
+		m_EnemyGrid.ForEachNear(bx, bz, br + bulletEnemyQueryPad, [&](int j)
 		{
 			if (hitResolved || !pEnemies[j].IsActive())
 				return;
@@ -667,7 +717,7 @@ void GameScene::CheckCollisions()
 	const float pz = m_Player.GetZ();
 	const float pr = m_Player.GetRadius();
 
-	enemyBulletGrid.ForEachNear(px, pz, playerQueryRadius, [&](int i)
+	m_EnemyBulletGrid.ForEachNear(px, pz, playerQueryRadius, [&](int i)
 	{
 		Bullet& eb = enemyBullets[i];
 		if (!eb.active)
@@ -721,52 +771,7 @@ void GameScene::CheckCollisions()
 		}
 	});
 
-	// C. 自機 vs アイテム回収
-	for (int i = 0; i < ITEM_MAX; i++)
-	{
-		if (m_Items[i].active)
-		{
-			float dx = px - m_Items[i].x;
-			float dz = pz - m_Items[i].z;
-			float dist = sqrtf(dx * dx + dz * dz);
-
-			bool pocCollect = pz > 100.0f;
-
-			if (dist < 180.0f || pocCollect)
-			{
-				float pullSpeed = 4.5f;
-				if (pocCollect) pullSpeed = 7.5f;
-
-				m_Items[i].vx += (dx / dist) * pullSpeed * 0.15f;
-				m_Items[i].vz += (dz / dist) * pullSpeed * 0.15f;
-			}
-
-			if (dist < 18.0f)
-			{
-				m_Items[i].active = false;
-
-				if (m_Items[i].type == 0)
-				{
-					m_Player.AddScore(500);
-					m_Effect.AddItemSparkle(m_Items[i].x, PLAYER_Y, m_Items[i].z, GetColor(0, 255, 255));
-				}
-				else if (m_Items[i].type == 1)
-				{
-					m_Player.SetBombCount(m_Player.GetBombCount() + 1);
-					m_Effect.AddItemSparkle(m_Items[i].x, PLAYER_Y, m_Items[i].z, GetColor(255, 200, 50));
-				}
-				else if (m_Items[i].type == 2)
-				{
-					m_Player.AddScore(SPELL_BONUS_SCORE);
-					g_GameData.spellBonusCollected++;
-					g_GameData.scoreMultiplier += 0.03f;
-					m_Effect.AddItemSparkle(m_Items[i].x, PLAYER_Y, m_Items[i].z, GetColor(255, 120, 255));
-				}
-
-				SoundSynth::PlayPaddleBounce();
-			}
-		}
-	}
+	CheckItemCollisions();
 }
 
 void GameScene::InitItems()
@@ -831,11 +836,11 @@ void GameScene::DrawItems() const
 			}
 			else if (m_Items[i].type == 2)
 			{
-				DrawSphere3D(center, rotSize + 2.0f, 8, GetColor(255, 80, 255), GetColor(255, 220, 255), FALSE);
+				DrawSphere3D(center, rotSize + 2.0f, 10, GetColor(255, 80, 255), GetColor(255, 220, 255), TRUE);
 			}
 			else
 			{
-				DrawSphere3D(center, rotSize + 1.0f, 8, GetColor(255, 180, 0), GetColor(255, 255, 200), FALSE);
+				DrawSphere3D(center, rotSize + 1.0f, 10, GetColor(255, 180, 0), GetColor(255, 255, 200), TRUE);
 			}
 		}
 	}
@@ -844,6 +849,9 @@ void GameScene::DrawItems() const
 // --- DrawHud: ネオンカラーのアーケードHUD描画（日本語ラベル付き） ---
 void GameScene::DrawHud()
 {
+	GameScreenSyncSize();
+	BeginScreenSpaceDraw();
+
 	SetDrawBlendMode(DX_BLENDMODE_ALPHA, 110);
 	DrawBox(0, 0, SCREEN_WIDTH, 140, GetColor(0, 8, 22), TRUE);
 	DrawBox(0, SCREEN_HEIGHT - 70, SCREEN_WIDTH, SCREEN_HEIGHT, GetColor(0, 8, 22), TRUE);

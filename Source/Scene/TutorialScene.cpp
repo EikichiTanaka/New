@@ -151,11 +151,12 @@ void TutorialScene::Draw()
 
 	float halfW = FIELD_HALF_W;
 	float halfD = FIELD_HALF_D;
+	unsigned int floorCol = GetColor(32, 58, 88);
 	DrawCube3D(
 		VGet(-halfW, -2, -halfD), VGet(halfW, 0, halfD),
-		GetColor(25, 45, 70), GetColor(40, 70, 100), TRUE);
+		floorCol, floorCol, FALSE);
 
-	float gridStep = 80.0f;
+	float gridStep = (float)FIELD_GRID_SPACING;
 	unsigned int gridCol = GetColor(35, 55, 85);
 	for (float gx = -halfW; gx <= halfW; gx += gridStep)
 		DrawLine3D(VGet(gx, 0, -halfD), VGet(gx, 0, halfD), gridCol);
@@ -166,7 +167,9 @@ void TutorialScene::Draw()
 	DrawSphere3D(pos, PLAYER_DRAW_SIZE, 10, GetColor(0, 220, 255), GetColor(255, 255, 255), FALSE);
 
 	m_Bullets.DrawLit();
+	SetUseLighting(FALSE);
 	m_Bullets.DrawEnemiesUnlit();
+	BeginScreenSpaceDraw();
 	m_Effect.Draw();
 	DrawHud();
 	DrawStepText();
@@ -174,6 +177,7 @@ void TutorialScene::Draw()
 
 void TutorialScene::DrawHud()
 {
+	BeginScreenSpaceDraw();
 	SetDrawBlendMode(DX_BLENDMODE_ALPHA, 120);
 	DrawBox(0, 0, SCREEN_WIDTH, 72, GetColor(0, 8, 22), TRUE);
 	SetDrawBlendMode(DX_BLENDMODE_NOBLEND, 0);

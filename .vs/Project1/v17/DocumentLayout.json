@@ -3,6 +3,18 @@
   "WorkspaceRootPath": "C:\\Users\\student\\Desktop\\\uFF4C\uFF4C\uFF4C\\New\\",
   "Documents": [
     {
+      "AbsoluteMoniker": "D:0:0:{CF0748BA-3910-4559-868C-0D6897AA17F2}|Project1.vcxproj|C:\\Users\\student\\Desktop\\\uFF4C\uFF4C\uFF4C\\New\\Source\\Common\\SaveData.cpp||{D0E1A5C6-B359-4E41-9B60-3365922C2A22}",
+      "RelativeMoniker": "D:0:0:{CF0748BA-3910-4559-868C-0D6897AA17F2}|Project1.vcxproj|solutionrelative:Source\\Common\\SaveData.cpp||{D0E1A5C6-B359-4E41-9B60-3365922C2A22}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{CF0748BA-3910-4559-868C-0D6897AA17F2}|Project1.vcxproj|C:\\Users\\student\\Desktop\\\uFF4C\uFF4C\uFF4C\\New\\Source\\Common\\SaveData.h||{D0E1A5C6-B359-4E41-9B60-3365922C2A22}",
+      "RelativeMoniker": "D:0:0:{CF0748BA-3910-4559-868C-0D6897AA17F2}|Project1.vcxproj|solutionrelative:Source\\Common\\SaveData.h||{D0E1A5C6-B359-4E41-9B60-3365922C2A22}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{CF0748BA-3910-4559-868C-0D6897AA17F2}|Project1.vcxproj|C:\\Users\\student\\Desktop\\\uFF4C\uFF4C\uFF4C\\New\\Source\\main.cpp||{D0E1A5C6-B359-4E41-9B60-3365922C2A22}",
+      "RelativeMoniker": "D:0:0:{CF0748BA-3910-4559-868C-0D6897AA17F2}|Project1.vcxproj|solutionrelative:Source\\main.cpp||{D0E1A5C6-B359-4E41-9B60-3365922C2A22}"
+    },
+    {
       "AbsoluteMoniker": "D:0:0:{CF0748BA-3910-4559-868C-0D6897AA17F2}|Project1.vcxproj|C:\\Users\\student\\Desktop\\\uFF4C\uFF4C\uFF4C\\New\\Source\\Scene\\TitleScene.cpp||{D0E1A5C6-B359-4E41-9B60-3365922C2A22}",
       "RelativeMoniker": "D:0:0:{CF0748BA-3910-4559-868C-0D6897AA17F2}|Project1.vcxproj|solutionrelative:Source\\Scene\\TitleScene.cpp||{D0E1A5C6-B359-4E41-9B60-3365922C2A22}"
     },
@@ -21,10 +33,6 @@
     {
       "AbsoluteMoniker": "D:0:0:{CF0748BA-3910-4559-868C-0D6897AA17F2}|Project1.vcxproj|C:\\Users\\student\\Desktop\\\uFF4C\uFF4C\uFF4C\\New\\Source\\Manager\\SceneManager.cpp||{D0E1A5C6-B359-4E41-9B60-3365922C2A22}",
       "RelativeMoniker": "D:0:0:{CF0748BA-3910-4559-868C-0D6897AA17F2}|Project1.vcxproj|solutionrelative:Source\\Manager\\SceneManager.cpp||{D0E1A5C6-B359-4E41-9B60-3365922C2A22}"
-    },
-    {
-      "AbsoluteMoniker": "D:0:0:{CF0748BA-3910-4559-868C-0D6897AA17F2}|Project1.vcxproj|C:\\Users\\student\\Desktop\\\uFF4C\uFF4C\uFF4C\\New\\Source\\main.cpp||{D0E1A5C6-B359-4E41-9B60-3365922C2A22}",
-      "RelativeMoniker": "D:0:0:{CF0748BA-3910-4559-868C-0D6897AA17F2}|Project1.vcxproj|solutionrelative:Source\\main.cpp||{D0E1A5C6-B359-4E41-9B60-3365922C2A22}"
     },
     {
       "AbsoluteMoniker": "D:0:0:{CF0748BA-3910-4559-868C-0D6897AA17F2}|Project1.vcxproj|C:\\Users\\student\\Desktop\\\uFF4C\uFF4C\uFF4C\\New\\Source\\Scene\\ResultScene.cpp||{D0E1A5C6-B359-4E41-9B60-3365922C2A22}",
@@ -74,23 +82,36 @@
       "DocumentGroups": [
         {
           "DockedWidth": 200,
-          "SelectedChildIndex": 6,
+          "SelectedChildIndex": 0,
           "Children": [
             {
               "$type": "Document",
-              "DocumentIndex": 1,
-              "Title": "BulletManager.cpp",
-              "DocumentMoniker": "C:\\Users\\student\\Desktop\\\uFF4C\uFF4C\uFF4C\\New\\Source\\Game\\BulletManager.cpp",
-              "RelativeDocumentMoniker": "Source\\Game\\BulletManager.cpp",
-              "ToolTip": "C:\\Users\\student\\Desktop\\\uFF4C\uFF4C\uFF4C\\New\\Source\\Game\\BulletManager.cpp",
-              "RelativeToolTip": "Source\\Game\\BulletManager.cpp",
-              "ViewState": "AQIAAAAAAAAAAAAAAADwvwAAAAAAAAAA",
+              "DocumentIndex": 0,
+              "Title": "SaveData.cpp",
+              "DocumentMoniker": "C:\\Users\\student\\Desktop\\\uFF4C\uFF4C\uFF4C\\New\\Source\\Common\\SaveData.cpp",
+              "RelativeDocumentMoniker": "Source\\Common\\SaveData.cpp",
+              "ToolTip": "C:\\Users\\student\\Desktop\\\uFF4C\uFF4C\uFF4C\\New\\Source\\Common\\SaveData.cpp",
+              "RelativeToolTip": "Source\\Common\\SaveData.cpp",
+              "ViewState": "AQIAAAAAAAAAAAAAAAAAAAEAAAASAAAA",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000677|",
-              "WhenOpened": "2026-05-20T01:40:13.172Z"
+              "WhenOpened": "2026-05-21T05:20:36.527Z",
+              "EditorCaption": ""
             },
             {
               "$type": "Document",
-              "DocumentIndex": 13,
+              "DocumentIndex": 1,
+              "Title": "SaveData.h",
+              "DocumentMoniker": "C:\\Users\\student\\Desktop\\\uFF4C\uFF4C\uFF4C\\New\\Source\\Common\\SaveData.h",
+              "RelativeDocumentMoniker": "Source\\Common\\SaveData.h",
+              "ToolTip": "C:\\Users\\student\\Desktop\\\uFF4C\uFF4C\uFF4C\\New\\Source\\Common\\SaveData.h",
+              "RelativeToolTip": "Source\\Common\\SaveData.h",
+              "ViewState": "AQIAAAAAAAAAAAAAAADwvwAAAAAAAAAA",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000680|",
+              "WhenOpened": "2026-05-21T05:20:32.004Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 15,
               "Title": "SoundSynth.cpp",
               "DocumentMoniker": "C:\\Users\\student\\Desktop\\\uFF4C\uFF4C\uFF4C\\New\\Source\\Common\\SoundSynth.cpp",
               "RelativeDocumentMoniker": "Source\\Common\\SoundSynth.cpp",
@@ -102,7 +123,7 @@
             },
             {
               "$type": "Document",
-              "DocumentIndex": 9,
+              "DocumentIndex": 11,
               "Title": "BlockManager.cpp",
               "DocumentMoniker": "C:\\Users\\student\\Desktop\\\uFF4C\uFF4C\uFF4C\\New\\Source\\Game\\BlockManager.cpp",
               "RelativeDocumentMoniker": "Source\\Game\\BlockManager.cpp",
@@ -114,7 +135,7 @@
             },
             {
               "$type": "Document",
-              "DocumentIndex": 10,
+              "DocumentIndex": 12,
               "Title": "Paddle.cpp",
               "DocumentMoniker": "C:\\Users\\student\\Desktop\\\uFF4C\uFF4C\uFF4C\\New\\Source\\Game\\Paddle.cpp",
               "RelativeDocumentMoniker": "Source\\Game\\Paddle.cpp",
@@ -126,7 +147,7 @@
             },
             {
               "$type": "Document",
-              "DocumentIndex": 11,
+              "DocumentIndex": 13,
               "Title": "Ball.cpp",
               "DocumentMoniker": "C:\\Users\\student\\Desktop\\\uFF4C\uFF4C\uFF4C\\New\\Source\\Game\\Ball.cpp",
               "RelativeDocumentMoniker": "Source\\Game\\Ball.cpp",
@@ -138,7 +159,7 @@
             },
             {
               "$type": "Document",
-              "DocumentIndex": 6,
+              "DocumentIndex": 8,
               "Title": "ResultScene.cpp",
               "DocumentMoniker": "C:\\Users\\student\\Desktop\\\uFF4C\uFF4C\uFF4C\\New\\Source\\Scene\\ResultScene.cpp",
               "RelativeDocumentMoniker": "Source\\Scene\\ResultScene.cpp",
@@ -150,20 +171,19 @@
             },
             {
               "$type": "Document",
-              "DocumentIndex": 0,
+              "DocumentIndex": 3,
               "Title": "TitleScene.cpp",
               "DocumentMoniker": "C:\\Users\\student\\Desktop\\\uFF4C\uFF4C\uFF4C\\New\\Source\\Scene\\TitleScene.cpp",
               "RelativeDocumentMoniker": "Source\\Scene\\TitleScene.cpp",
               "ToolTip": "C:\\Users\\student\\Desktop\\\uFF4C\uFF4C\uFF4C\\New\\Source\\Scene\\TitleScene.cpp",
               "RelativeToolTip": "Source\\Scene\\TitleScene.cpp",
-              "ViewState": "AQIAACIAAAAAAAAAAAAAAD8AAAARAAAA",
+              "ViewState": "AQIAABwAAAAAAAAAAAAAACcAAAAAAAAA",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000677|",
-              "WhenOpened": "2026-05-18T06:16:18.125Z",
-              "EditorCaption": ""
+              "WhenOpened": "2026-05-18T06:16:18.125Z"
             },
             {
               "$type": "Document",
-              "DocumentIndex": 7,
+              "DocumentIndex": 9,
               "Title": "GameScene.cpp",
               "DocumentMoniker": "C:\\Users\\student\\Desktop\\\uFF4C\uFF4C\uFF4C\\New\\Source\\Scene\\GameScene.cpp",
               "RelativeDocumentMoniker": "Source\\Scene\\GameScene.cpp",
@@ -175,7 +195,7 @@
             },
             {
               "$type": "Document",
-              "DocumentIndex": 4,
+              "DocumentIndex": 7,
               "Title": "SceneManager.cpp",
               "DocumentMoniker": "C:\\Users\\student\\Desktop\\\uFF4C\uFF4C\uFF4C\\New\\Source\\Manager\\SceneManager.cpp",
               "RelativeDocumentMoniker": "Source\\Manager\\SceneManager.cpp",
@@ -187,7 +207,7 @@
             },
             {
               "$type": "Document",
-              "DocumentIndex": 3,
+              "DocumentIndex": 6,
               "Title": "DifficultySelectScene.cpp",
               "DocumentMoniker": "C:\\Users\\student\\Desktop\\\uFF4C\uFF4C\uFF4C\\New\\Source\\Scene\\DifficultySelectScene.cpp",
               "RelativeDocumentMoniker": "Source\\Scene\\DifficultySelectScene.cpp",
@@ -199,7 +219,7 @@
             },
             {
               "$type": "Document",
-              "DocumentIndex": 2,
+              "DocumentIndex": 5,
               "Title": "KeyHelper.cpp",
               "DocumentMoniker": "C:\\Users\\student\\Desktop\\\uFF4C\uFF4C\uFF4C\\New\\Source\\Common\\KeyHelper.cpp",
               "RelativeDocumentMoniker": "Source\\Common\\KeyHelper.cpp",
@@ -211,7 +231,31 @@
             },
             {
               "$type": "Document",
-              "DocumentIndex": 14,
+              "DocumentIndex": 2,
+              "Title": "main.cpp",
+              "DocumentMoniker": "C:\\Users\\student\\Desktop\\\uFF4C\uFF4C\uFF4C\\New\\Source\\main.cpp",
+              "RelativeDocumentMoniker": "Source\\main.cpp",
+              "ToolTip": "C:\\Users\\student\\Desktop\\\uFF4C\uFF4C\uFF4C\\New\\Source\\main.cpp",
+              "RelativeToolTip": "Source\\main.cpp",
+              "ViewState": "AQIAAAAAAAAAAAAAAAAAABkAAAAZAAAA",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000677|",
+              "WhenOpened": "2026-05-18T05:01:43.359Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 4,
+              "Title": "BulletManager.cpp",
+              "DocumentMoniker": "C:\\Users\\student\\Desktop\\\uFF4C\uFF4C\uFF4C\\New\\Source\\Game\\BulletManager.cpp",
+              "RelativeDocumentMoniker": "Source\\Game\\BulletManager.cpp",
+              "ToolTip": "C:\\Users\\student\\Desktop\\\uFF4C\uFF4C\uFF4C\\New\\Source\\Game\\BulletManager.cpp",
+              "RelativeToolTip": "Source\\Game\\BulletManager.cpp",
+              "ViewState": "AQIAAAAAAAAAAAAAAADwvwAAAAAAAAAA",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000677|",
+              "WhenOpened": "2026-05-20T01:40:13.172Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 16,
               "Title": "GameData.cpp",
               "DocumentMoniker": "C:\\Users\\student\\Desktop\\\uFF4C\uFF4C\uFF4C\\New\\Source\\Common\\GameData.cpp",
               "RelativeDocumentMoniker": "Source\\Common\\GameData.cpp",
@@ -223,7 +267,7 @@
             },
             {
               "$type": "Document",
-              "DocumentIndex": 8,
+              "DocumentIndex": 10,
               "Title": "TitleScene.h",
               "DocumentMoniker": "C:\\Users\\student\\Desktop\\\uFF4C\uFF4C\uFF4C\\New\\Source\\Scene\\TitleScene.h",
               "RelativeDocumentMoniker": "Source\\Scene\\TitleScene.h",
@@ -235,7 +279,7 @@
             },
             {
               "$type": "Document",
-              "DocumentIndex": 15,
+              "DocumentIndex": 17,
               "Title": "GameData.h",
               "DocumentMoniker": "C:\\Users\\student\\Desktop\\\uFF4C\uFF4C\uFF4C\\New\\Source\\Common\\GameData.h",
               "RelativeDocumentMoniker": "Source\\Common\\GameData.h",
@@ -247,19 +291,7 @@
             },
             {
               "$type": "Document",
-              "DocumentIndex": 5,
-              "Title": "main.cpp",
-              "DocumentMoniker": "C:\\Users\\student\\Desktop\\\uFF4C\uFF4C\uFF4C\\New\\Source\\main.cpp",
-              "RelativeDocumentMoniker": "Source\\main.cpp",
-              "ToolTip": "C:\\Users\\student\\Desktop\\\uFF4C\uFF4C\uFF4C\\New\\Source\\main.cpp",
-              "RelativeToolTip": "Source\\main.cpp",
-              "ViewState": "AQIAACcAAAAAAAAAAAAAABIAAAARAAAA",
-              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000677|",
-              "WhenOpened": "2026-05-18T05:01:43.359Z"
-            },
-            {
-              "$type": "Document",
-              "DocumentIndex": 12,
+              "DocumentIndex": 14,
               "Title": "GameEffect.cpp",
               "DocumentMoniker": "C:\\Users\\student\\Desktop\\\uFF4C\uFF4C\uFF4C\\New\\Source\\Game\\GameEffect.cpp",
               "RelativeDocumentMoniker": "Source\\Game\\GameEffect.cpp",

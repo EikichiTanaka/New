@@ -289,11 +289,7 @@ void Enemy::Draw() const
 		break;
 	}
 
-	// ?G??3D??????????`??
 	DrawCube3D(minPos, maxPos, bodyColor, edgeColor, TRUE);
-
-	if ((GetNowCount() % ENEMY_HP_BAR_DRAW_INTERVAL) != 0)
-		return;
 
 	VECTOR hpWorldPos = VGet(m_X, m_Y + m_Radius + 6.0f, m_Z);
 	VECTOR hpScreenPos = ConvWorldPosToScreenPos(hpWorldPos);

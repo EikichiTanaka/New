@@ -189,6 +189,7 @@
     <ClInclude Include="Source\Game\Bullet.h" />
     <ClInclude Include="Source\Game\BulletManager.h" />
     <ClInclude Include="Source\Game\BulletPool.h" />
+    <ClInclude Include="Source\Game\ParticlePool.h" />
     <ClInclude Include="Source\Game\SpatialGrid.h" />
     <ClInclude Include="Source\Game\Collision.h" />
     <ClInclude Include="Source\Game\Effect.h" />

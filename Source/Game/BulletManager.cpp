@@ -153,6 +153,13 @@ void BulletManager::DrawPlayerBullets3D() const
 	}
 }
 
+void BulletManager::DrawLit() const
+{
+	SetMaterialUseVertSpcColor(TRUE);
+	DrawPlayerBullets3D();
+	SetMaterialUseVertSpcColor(FALSE);
+}
+
 void BulletManager::DrawEnemyBullets3DUnlit() const
 {
 	const int seg = BULLET_DRAW_SEG_ENEMY;
@@ -168,8 +175,8 @@ void BulletManager::DrawEnemyBullets3DUnlit() const
 	for (int li = 0; li < count; li++)
 	{
 		const Bullet& b = m_EnemyPool.GetSlots()[m_EnemyPool.GetActiveIndex(li)];
-		float dx = b.x - m_RefPlayerX;
-		float dz = b.z - m_RefPlayerZ;
+		const float dx = b.x - m_RefPlayerX;
+		const float dz = b.z - m_RefPlayerZ;
 		if (fabsf(dx) > cullX || fabsf(dz) > cullZ)
 			continue;
 
@@ -178,13 +185,6 @@ void BulletManager::DrawEnemyBullets3DUnlit() const
 
 	if (useAlpha)
 		SetDrawBlendMode(DX_BLENDMODE_NOBLEND, 0);
-}
-
-void BulletManager::DrawLit() const
-{
-	SetMaterialUseVertSpcColor(TRUE);
-	DrawPlayerBullets3D();
-	SetMaterialUseVertSpcColor(FALSE);
 }
 
 void BulletManager::DrawEnemiesUnlit() const

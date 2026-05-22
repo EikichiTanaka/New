@@ -128,6 +128,12 @@ const char* SaveDataGetAchievementDesc(AchievementId id)
 const char* SaveDataGetActiveTitle()
 {
 	int unlocked = 0;
+
+
+
+
+
+
 	for (int i = 0; i < (int)AchievementId::ACHIEVEMENT_COUNT; i++)
 		if (g_Save.achievements[i]) unlocked++;
 

@@ -10,6 +10,8 @@
 #include "Game/BulletManager.h"
 #include "Game/EnemyManager.h"
 #include "Game/Effect.h"
+#include "Game/SpatialGrid.h"
+#include "GameConfig.h"
 
 class GameScene : public SceneBase
 {
@@ -25,6 +27,7 @@ private:
 	void SetupCamera();
 	void DrawField();
 	void CheckCollisions();
+	void CheckItemCollisions();
 	void DrawHud();
 	void DrawPauseOverlay();
 
@@ -49,8 +52,10 @@ private:
 	EnemyManager  m_Enemies;
 	Effect        m_Effect;
 
+	SpatialGridXZ<SPATIAL_GRID_COLS, SPATIAL_GRID_ROWS, ENEMY_MAX>   m_EnemyGrid;
+	SpatialGridXZ<SPATIAL_GRID_COLS, SPATIAL_GRID_ROWS, EBULLET_MAX> m_EnemyBulletGrid;
+
 	int  m_FrameCount;
-	bool m_GameEnded;
 	int  m_ClearDelayTimer;
 	int  m_DirLightHandle;
 	int  m_PlayerLightHandle;
