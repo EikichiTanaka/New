@@ -289,7 +289,8 @@ void Enemy::Draw() const
 		break;
 	}
 
-	DrawCube3D(minPos, maxPos, bodyColor, edgeColor, TRUE);
+	// 敵本体（無ライトで軽量描画）
+	DrawCube3D(minPos, maxPos, bodyColor, edgeColor, FALSE);
 
 	VECTOR hpWorldPos = VGet(m_X, m_Y + m_Radius + 6.0f, m_Z);
 	VECTOR hpScreenPos = ConvWorldPosToScreenPos(hpWorldPos);
