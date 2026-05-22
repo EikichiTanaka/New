@@ -727,7 +727,8 @@ void EnemyManager::DrawMidBoss() const
 	if (!m_MidBossActive) return;
 	unsigned int col = (m_MidBossId == 1) ? GetColor(255, 100, 180) : GetColor(255, 180, 60);
 	VECTOR c = VGet(m_MidBossX, PLAYER_Y, m_MidBossZ);
-	DrawSphere3D(c, m_MidBossRadius, 8, GetColor(40, 10, 50), col, TRUE);
+	// 最後の TRUE→FALSE: ライト計算無効化（軽量化）
+	DrawSphere3D(c, m_MidBossRadius, 8, GetColor(40, 10, 50), col, FALSE);
 }
 
 // --- DrawBoss: 最終巨大ボスの極彩色3D描画 ---
@@ -745,7 +746,8 @@ void EnemyManager::DrawBoss() const
 	else if (m_BossPhase == 1)  edgeColor = GetColor(255, 180, 0);
 	else                        edgeColor = GetColor(255, 0, 50);
 
-	DrawCube3D(minPos, maxPos, bodyColor, edgeColor, TRUE);
+	// 最後の TRUE→FALSE: ライト計算無効化（軽量化）
+	DrawCube3D(minPos, maxPos, bodyColor, edgeColor, FALSE);
 
 	float coreRadius = m_BossRadius * 0.65f + sinf((float)m_BossTimer / 10.0f) * 3.0f;
 	DrawSphere3D(VGet(m_BossX, m_BossY, m_BossZ), coreRadius, 8, edgeColor, edgeColor, FALSE);
