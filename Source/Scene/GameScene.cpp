@@ -206,15 +206,13 @@ SceneType GameScene::Update()
 	return SceneType::None;
 }
 
-// --- SetupSceneLighting: DxLibライトで3D空間を照らす（方向ライトのみ） ---
+// --- SetupSceneLighting: 軽量化のため毎フレームのライト計算を完全に廃止 ---
+// 以前は SetUseLighting(TRUE) + SetGlobalAmbientLight 等を呼んでいたが、
+// 「敵がいなくても重い」原因のひとつだったため、Tutorial と同様に
+// ライトを使わない方針へ変更。Draw() 冒頭の SetUseLighting(FALSE) だけで足りる。
 void GameScene::SetupSceneLighting()
 {
-	SetUseLighting(TRUE);
-	SetMaterialUseVertDifColor(TRUE);
-	SetMaterialUseVertSpcColor(FALSE);
-	SetGlobalAmbientLight(GetColorF(0.55f, 0.58f, 0.68f, 1.0f));
-
-	// ポイントライトを廃止したので、毎フレームの位置更新は不要
+	SetUseLighting(FALSE);
 }
 
 // --- AddScreenShake: 撃破・被弾時のカメラシェイク ---
@@ -230,22 +228,19 @@ void GameScene::DisableSceneLighting()
 	SetUseLighting(FALSE);
 }
 
-// --- Draw: 画面描画処理 ---
+// --- Draw: 画面描画処理（Tutorial と同じくライティング完全 OFF 方針） ---
 void GameScene::Draw()
 {
-	// 夜空色の背景（ライト無効のクリア色）
 	SetBackgroundColor(24, 36, 58);
 	SetUseLighting(FALSE);
 
 	SetupCamera();
 
-	SetupSceneLighting();
 	DrawField();
 	m_Player.Draw();
 	m_Enemies.Draw();
 	m_Bullets.DrawLit();
 	DrawItems();
-	DisableSceneLighting();
 	m_Bullets.DrawEnemiesUnlit();
 	BeginScreenSpaceDraw();
 	m_Effect.Draw();
@@ -403,36 +398,18 @@ void GameScene::SetupCamera()
 	SetCameraPositionAndTargetAndUpVec(camPos, camTarget, camUp);
 }
 
-// --- DrawField: 3D床面（ライト適用）＋ネオングリッド ---
+// --- DrawField: 床のみのシンプル描画（Tutorial と同等の軽量化版） ---
+// 以前は床に加えてグリッド線(数十本) + 境界線4本 + ライトON/OFF切替を
+// 毎フレーム行っていたが、ゲームシーンの常時負荷の原因のため廃止。
 void GameScene::DrawField()
 {
 	float halfW = FIELD_WIDTH / 2.0f;
 	float halfD = FIELD_DEPTH / 2.0f;
 
-	// 床面（単色・ライトOFF）
 	VECTOR floorMin = VGet(-halfW, -4.0f, -halfD);
 	VECTOR floorMax = VGet(halfW, 0.0f, halfD);
 	unsigned int floorCol = GetColor(32, 58, 88);
 	DrawCube3D(floorMin, floorMax, floorCol, floorCol, FALSE);
-
-	DisableSceneLighting();
-
-	int gridColor = GetColor(0, 90, 50);
-	float gridSpacing = (float)FIELD_GRID_SPACING;
-
-	for (float z = -halfD; z <= halfD; z += gridSpacing)
-		DrawLine3D(VGet(-halfW, 0.2f, z), VGet(halfW, 0.2f, z), gridColor);
-	for (float x = -halfW; x <= halfW; x += gridSpacing)
-		DrawLine3D(VGet(x, 0.2f, -halfD), VGet(x, 0.2f, halfD), gridColor);
-
-	int borderColor = GetColor(0, 255, 120);
-	DrawLine3D(VGet(-halfW, 0.2f, -halfD), VGet(halfW, 0.2f, -halfD), borderColor);
-	DrawLine3D(VGet(-halfW, 0.2f, halfD), VGet(halfW, 0.2f, halfD), borderColor);
-	DrawLine3D(VGet(-halfW, 0.2f, -halfD), VGet(-halfW, 0.2f, halfD), borderColor);
-	DrawLine3D(VGet(halfW, 0.2f, -halfD), VGet(halfW, 0.2f, halfD), borderColor);
-
-	SetUseLighting(TRUE);
-	SetMaterialUseVertDifColor(TRUE);
 }
 
 // --- ExecuteBomb: ボム（スペルカード）発動 ---

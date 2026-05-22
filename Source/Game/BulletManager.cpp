@@ -149,15 +149,15 @@ void BulletManager::DrawPlayerBullets3D() const
 	for (int li = 0; li < m_PlayerPool.GetActiveCount(); li++)
 	{
 		const Bullet& b = m_PlayerPool.GetSlots()[m_PlayerPool.GetActiveIndex(li)];
-		DrawSphere3D(VGet(b.x, b.y, b.z), b.radius, seg, b.color, edge, TRUE);
+		// 最後の TRUE→FALSE: ライト計算を無効化（軽量化）
+		DrawSphere3D(VGet(b.x, b.y, b.z), b.radius, seg, b.color, edge, FALSE);
 	}
 }
 
 void BulletManager::DrawLit() const
 {
-	SetMaterialUseVertSpcColor(TRUE);
+	// SetMaterialUseVertSpcColor 切替もライト無効化により不要になったため廃止
 	DrawPlayerBullets3D();
-	SetMaterialUseVertSpcColor(FALSE);
 }
 
 void BulletManager::DrawEnemyBullets3DUnlit() const
