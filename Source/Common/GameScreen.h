@@ -10,3 +10,4 @@ extern int g_ScreenHeight;
 #define SCREEN_HEIGHT  (g_ScreenHeight)
 
 void GameScreenSyncSize();
+void GameReloadGraphicsResources();

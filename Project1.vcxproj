@@ -128,6 +128,9 @@
       <AdditionalLibraryDirectories>$(DXLIB_DIR);%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <AdditionalDependencies>DxLib_x64_d.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
+    <PostBuildEvent>
+      <Command>xcopy /E /I /Y "$(ProjectDir)assets" "$(OutDir)assets"</Command>
+    </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <ClCompile>
@@ -150,6 +153,9 @@
       <AdditionalLibraryDirectories>$(DXLIB_DIR);%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <AdditionalDependencies>DxLib_x64.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
+    <PostBuildEvent>
+      <Command>xcopy /E /I /Y "$(ProjectDir)assets" "$(OutDir)assets"</Command>
+    </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="Source\main.cpp" />
@@ -157,6 +163,7 @@
     <ClCompile Include="Source\Scene\TitleScene.cpp" />
     <ClCompile Include="Source\Scene\DifficultySelectScene.cpp" />
     <ClCompile Include="Source\Scene\GameScene.cpp" />
+    <ClCompile Include="Source\Scene\Stage2Scene.cpp" />
     <ClCompile Include="Source\Scene\TutorialScene.cpp" />
     <ClCompile Include="Source\Scene\ResultScene.cpp" />
     <ClCompile Include="Source\Scene\OptionsScene.cpp" />
@@ -168,11 +175,15 @@
     <ClCompile Include="Source\Game\EnemyManager.cpp" />
     <ClCompile Include="Source\Game\BulletManager.cpp" />
     <ClCompile Include="Source\Game\Effect.cpp" />
+    <ClCompile Include="Source\Game\SilhouetteDraw.cpp" />
+    <ClCompile Include="Source\Game\CollisionDebug.cpp" />
+    <ClCompile Include="Source\Game\TouhouTheme.cpp" />
     <ClCompile Include="Source\Common\SoundSynth.cpp" />
     <ClCompile Include="Source\Common\GameData.cpp" />
     <ClCompile Include="Source\Common\GameSession.cpp" />
     <ClCompile Include="Source\Common\SaveData.cpp" />
     <ClCompile Include="Source\Common\KeyHelper.cpp" />
+    <ClCompile Include="Source\Common\ResourceManager.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Source\GameConfig.h" />
@@ -181,6 +192,7 @@
     <ClInclude Include="Source\Scene\TitleScene.h" />
     <ClInclude Include="Source\Scene\DifficultySelectScene.h" />
     <ClInclude Include="Source\Scene\GameScene.h" />
+    <ClInclude Include="Source\Scene\Stage2Scene.h" />
     <ClInclude Include="Source\Scene\TutorialScene.h" />
     <ClInclude Include="Source\Scene\ResultScene.h" />
     <ClInclude Include="Source\Game\Player.h" />
@@ -192,12 +204,16 @@
     <ClInclude Include="Source\Game\ParticlePool.h" />
     <ClInclude Include="Source\Game\SpatialGrid.h" />
     <ClInclude Include="Source\Game\Collision.h" />
+    <ClInclude Include="Source\Game\CollisionDebug.h" />
     <ClInclude Include="Source\Game\Effect.h" />
+    <ClInclude Include="Source\Game\SilhouetteDraw.h" />
+    <ClInclude Include="Source\Game\TouhouTheme.h" />
     <ClInclude Include="Source\Common\SoundSynth.h" />
     <ClInclude Include="Source\Common\GameData.h" />
     <ClInclude Include="Source\Common\GameSession.h" />
     <ClInclude Include="Source\Common\SaveData.h" />
     <ClInclude Include="Source\Common\KeyHelper.h" />
+    <ClInclude Include="Source\Common\ResourceManager.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets" />

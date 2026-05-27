@@ -14,7 +14,8 @@ public:
 	bool CanAddEnemyBullet() const { return m_EnemyPool.GetActiveCount() < MAX_ACTIVE_ENEMY_BULLETS; }
 
 	void AddPlayerBullet(float x, float y, float z, float vx, float vy, float vz,
-		float radius, unsigned int color, PlayerBulletKind kind = PlayerBulletKind::Normal, int pierce = 0);
+		float radius, unsigned int color, PlayerBulletKind kind = PlayerBulletKind::Normal,
+		int pierce = 0, int hitDamage = 1);
 
 	bool AddEnemyBullet(float x, float y, float z, float vx, float vy, float vz, float radius, unsigned int color);
 
@@ -28,6 +29,7 @@ public:
 	int GetPlayerBulletMax() const { return PBULLET_MAX; }
 
 	Bullet* GetEnemyBullets() { return m_EnemyPool.GetSlots(); }
+	const Bullet* GetEnemyBullets() const { return m_EnemyPool.GetSlots(); }
 	int GetEnemyBulletMax() const { return EBULLET_MAX; }
 	int GetActiveEnemyBulletCount() const { return m_EnemyPool.GetActiveCount(); }
 
@@ -38,7 +40,7 @@ public:
 private:
 	void SetupPlayerBullet(Bullet& b, float x, float y, float z,
 		float vx, float vy, float vz, float radius, unsigned int color,
-		PlayerBulletKind kind, int pierce);
+		PlayerBulletKind kind, int pierce, int hitDamage);
 
 	void SetupEnemyBullet(Bullet& b, float x, float y, float z,
 		float vx, float vy, float vz, float radius, unsigned int color);

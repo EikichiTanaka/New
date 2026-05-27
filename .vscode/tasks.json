@@ -1,28 +1,58 @@
 {
+    "version": "2.0.0",
     "tasks": [
         {
-            "type": "cppbuild",
-            "label": "C/C++: cl.exe アクティブなファイルのビルド",
-            "command": "cl.exe",
-            "args": [
-                "/Zi",
-                "/EHsc",
-                "/nologo",
-                "/Fe${fileDirname}\\${fileBasenameNoExtension}.exe",
-                "${file}"
-            ],
+            "label": "Build Project1 (Debug x64)",
+            "type": "shell",
+            "command": "${workspaceFolder}\\scripts\\build.bat",
             "options": {
-                "cwd": "${fileDirname}"
+                "cwd": "${workspaceFolder}",
+                "shell": {
+                    "executable": "cmd.exe",
+                    "args": ["/c"]
+                }
             },
-            "problemMatcher": [
-                "$msCompile"
-            ],
             "group": {
                 "kind": "build",
                 "isDefault": true
             },
-            "detail": "デバッガーによって生成されたタスク。"
+            "problemMatcher": "$msCompile",
+            "presentation": {
+                "reveal": "always",
+                "panel": "shared"
+            }
+        },
+        {
+            "label": "Build Project1 (Release x64)",
+            "type": "shell",
+            "command": "${workspaceFolder}\\scripts\\build.bat",
+            "args": ["release"],
+            "options": {
+                "cwd": "${workspaceFolder}",
+                "shell": {
+                    "executable": "cmd.exe",
+                    "args": ["/c"]
+                }
+            },
+            "group": "build",
+            "problemMatcher": "$msCompile",
+            "presentation": {
+                "reveal": "always",
+                "panel": "shared"
+            }
+        },
+        {
+            "label": "Kill Project1.exe (unlock linker)",
+            "type": "shell",
+            "command": "${workspaceFolder}\\scripts\\kill-game.bat",
+            "options": {
+                "cwd": "${workspaceFolder}",
+                "shell": {
+                    "executable": "cmd.exe",
+                    "args": ["/c"]
+                }
+            },
+            "problemMatcher": []
         }
-    ],
-    "version": "2.0.0"
+    ]
 }

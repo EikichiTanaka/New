@@ -34,6 +34,14 @@ struct GameSession
 	StageStart stageStart    = StageStart::All;
 	ShotType   shotType      = ShotType::Spread;
 	int        stageChapter  = 0;
+	// ボスラッシュ：開始形態（0=第1形態 … 3=第4形態）。確認・練習用
+	int        bossRushStartPhase = 0;
+
+	// 出撃する面（1=一面：弾幕ボスラッシュ、2=二面：全方位3Dシューター）
+	int        stageNumber   = 1;
+
+	// ポーズ中オプションから戻るとき true（OptionsScene が参照）
+	bool       returnToGameAfterOptions = false;
 };
 
 extern GameSession g_Session;

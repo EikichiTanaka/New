@@ -17,6 +17,7 @@
 #include "Common/GameOptions.h"
 #include "Common/BgmPlayer.h"
 #include "Common/GameScreen.h"
+#include "Common/ResourceManager.h"
 
 // ============================================================
 // WinMain: Windows アプリケーションのエントリーポイント
@@ -39,7 +40,6 @@ int WINAPI WinMain(
 
 	GameOptionsLoad();
 	GameOptionsApplyGraphics();
-	GameScreenSyncSize();
 	GameOptionsApplyVolumes();
 	BgmPlayer::Init();
 
@@ -68,6 +68,7 @@ int WINAPI WinMain(
 		ScreenFlip();
 	}
 
+	ResourceManager::Final();
 	BgmPlayer::Final();
 	GameOptionsSave();
 	DxLib_End();

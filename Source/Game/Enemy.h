@@ -19,6 +19,21 @@ enum class EnemyType
 	Sniper
 };
 
+inline float GetEnemyCollisionRadius(EnemyType type)
+{
+	float r = ENEMY_GRUNT_COLLISION_RADIUS;
+	switch (type)
+	{
+	case EnemyType::Tank:     return r * 1.28f;
+	case EnemyType::Spinner:  return r * 0.92f;
+	case EnemyType::Shield:   return r * 1.12f;
+	case EnemyType::Splitter: return r * 0.88f;
+	case EnemyType::Eraser:   return r * 0.95f;
+	case EnemyType::Sniper:   return r * 1.05f;
+	default:                  return r;
+	}
+}
+
 class Enemy
 {
 public:

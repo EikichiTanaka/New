@@ -1,4 +1,8 @@
 ﻿#include "Game/Player.h"
+#include "Game/SilhouetteDraw.h"
+#include "Game/TouhouTheme.h"
+#include "Common/ResourceManager.h"
+#include "Game/CollisionDebug.h"
 #include "Common/GameSession.h"
 #include "Common/GameData.h"
 #include "DxLib.h"
@@ -19,7 +23,7 @@ void Player::Init(bool practiceMode, bool scoreAttackMode)
 
 	m_Score = 0;
 	m_Lives = (practiceMode || scoreAttackMode) ? 99 : START_LIVES;
-	m_BombCount = 3;
+	m_BombCount = START_BOMBS;
 	m_GrazeCount = 0;
 	m_FeverGauge = 0.0f;
 	m_FeverTimer = 0;
@@ -146,23 +150,31 @@ void Player::Update(BulletManager& bullets)
 		SoundSynth::PlayFeverReady();
 	}
 
-	if (slowMode && isShooting)
-	{
-		if (m_ChargeFrames < CHARGE_MAX_FRAMES)
-			m_ChargeFrames++;
-	}
-	else if (m_WasShootHeld && m_ChargeFrames >= 12)
+	const bool moving = moveLeft || moveRight || moveUp || moveDown;
+	const bool chargeBuild = isShooting && (slowMode || !moving);
+
+	if (!isShooting && m_WasShootHeld && m_ChargeFrames >= CHARGE_MIN_FRAMES)
 	{
 		SoundSynth::PlayPlayerShoot();
 		FireChargeShot(bullets);
 		m_ChargeFrames = 0;
-		m_FireCooldown = 8;
+		m_FireCooldown = 12;
+	}
+	else if (chargeBuild)
+	{
+		if (m_ChargeFrames < CHARGE_MAX_FRAMES)
+			m_ChargeFrames++;
 	}
 	else if (isShooting && m_FireCooldown == 0)
 	{
 		SoundSynth::PlayPlayerShoot();
 		FireShots(bullets, IsFeverMode());
 		m_FireCooldown = IsFeverMode() ? 1 : PLAYER_FIRE_RATE;
+		if (m_ChargeFrames < CHARGE_MIN_FRAMES)
+			m_ChargeFrames = 0;
+	}
+	else if (!isShooting && m_ChargeFrames > 0 && m_ChargeFrames < CHARGE_MIN_FRAMES)
+	{
 		m_ChargeFrames = 0;
 	}
 
@@ -180,10 +192,33 @@ void Player::FireChargeShot(BulletManager& bullets)
 {
 	float ratio = (float)m_ChargeFrames / (float)CHARGE_MAX_FRAMES;
 	if (ratio > 1.0f) ratio = 1.0f;
-	float r = PBULLET_RADIUS * (1.5f + ratio * CHARGE_SHOT_RADIUS_MUL);
-	unsigned int col = GetColor(255, (int)(180 + ratio * 75), 255);
-	bullets.AddPlayerBullet(m_X, PLAYER_Y, m_Z, 0, 0, PBULLET_SPEED * (1.1f + ratio * 0.4f),
-		r, col, PlayerBulletKind::Pierce, PIERCE_HIT_MAX + 2);
+	const float speed = PBULLET_SPEED * (1.25f + ratio * 0.95f);
+	const float coreR = PBULLET_RADIUS * (2.0f + ratio * CHARGE_SHOT_RADIUS_MUL);
+	const int pierce = PIERCE_HIT_MAX + CHARGE_SHOT_PIERCE_BONUS + (int)(ratio * 6.0f);
+	const int damage = CHARGE_SHOT_DAMAGE_BASE + (int)(ratio * (float)CHARGE_SHOT_DAMAGE_SCALE);
+	const unsigned int coreCol = GetColor(255, (int)(160 + ratio * 95), 255);
+	const unsigned int sideCol = GetColor(255, (int)(120 + ratio * 80), 220);
+
+	bullets.AddPlayerBullet(m_X, PLAYER_Y, m_Z, 0, 0, speed, coreR, coreCol,
+		PlayerBulletKind::Charge, pierce, damage);
+
+	const float sideR = coreR * 0.55f;
+	const int sideDmg = (damage + 1) / 2;
+	const float spread = 0.22f + ratio * 0.18f;
+	bullets.AddPlayerBullet(m_X - 14.0f, PLAYER_Y, m_Z, -spread * speed, 0, speed * 0.92f,
+		sideR, sideCol, PlayerBulletKind::Charge, pierce / 2 + 2, sideDmg);
+	bullets.AddPlayerBullet(m_X + 14.0f, PLAYER_Y, m_Z, spread * speed, 0, speed * 0.92f,
+		sideR, sideCol, PlayerBulletKind::Charge, pierce / 2 + 2, sideDmg);
+
+	if (ratio >= 0.65f)
+	{
+		const float wideR = coreR * 0.75f;
+		const int wideDmg = (damage * 2) / 3;
+		bullets.AddPlayerBullet(m_X - 26.0f, PLAYER_Y, m_Z, -spread * 1.4f * speed, 0, speed * 0.85f,
+			wideR, sideCol, PlayerBulletKind::Charge, pierce / 2, wideDmg);
+		bullets.AddPlayerBullet(m_X + 26.0f, PLAYER_Y, m_Z, spread * 1.4f * speed, 0, speed * 0.85f,
+			wideR, sideCol, PlayerBulletKind::Charge, pierce / 2, wideDmg);
+	}
 }
 
 // --- Draw: 自機の描画 ---
@@ -191,10 +226,9 @@ void Player::Draw()
 {
 	if (!m_Alive) return;
 
-	// 被弾無敵時の点滅処理
 	if (m_InvTimer > 0 && (m_InvTimer / 4) % 2 == 0)
 	{
-		return; // 描画スキップして点滅
+		return;
 	}
 
 	VECTOR pos = VGet(m_X, PLAYER_Y, m_Z);
@@ -203,25 +237,85 @@ void Player::Draw()
 
 	bool slowMode = CheckHitKey(KEY_INPUT_LSHIFT) != 0 || CheckHitKey(KEY_INPUT_RSHIFT) != 0;
 
-	// エンジン噴射のトレイル（無ライト・低セグメント）
-	SetDrawBlendMode(DX_BLENDMODE_ADD, 90);
-	VECTOR trailPos = VGet(m_X, PLAYER_Y, m_Z - 22.0f);
-	DrawSphere3D(trailPos, PLAYER_DRAW_SIZE * 0.75f, 6, bodyColor, bodyColor, FALSE);
-	SetDrawBlendMode(DX_BLENDMODE_NOBLEND, 0);
-
-	DrawSphere3D(pos, PLAYER_DRAW_SIZE, 6, bodyColor, glowColor, FALSE);
-
-	if (IsFeverMode())
+	if (PreferGameSprites() && ResourceManager::IsReady())
 	{
-		SetDrawBlendMode(DX_BLENDMODE_ADD, 120);
-		float auraRadius = PLAYER_DRAW_SIZE + 4.0f + sinf((float)GetNowCount() / 100.0f) * 2.0f;
-		DrawSphere3D(pos, auraRadius, 6, GetColor(255, 215, 0), GetColor(255, 215, 0), FALSE);
+		ResourceManager::DrawPlayer(m_X, PLAYER_Y, m_Z, IsFeverMode());
+		if (CollisionDebug::IsVisible())
+			DrawSphere3D(pos, PLAYER_COLLISION_RADIUS, 6, GetColor(255, 255, 255), GetColor(255, 255, 255), FALSE);
+		return;
+	}
+
+	// [VISUAL_THEME] 巫女ビルボード（東方風）
+	if (UseTouhouTheme() && TouhouTheme::IsReady())
+	{
+		if (VISUAL_RICH)
+		{
+			SetDrawBlendMode(DX_BLENDMODE_ADD, 55);
+			VECTOR tp = VGet(m_X, PLAYER_Y, m_Z - 20.0f);
+			DrawSphere3D(tp, PLAYER_DRAW_SIZE * 0.5f, 4, GetColor(255, 180, 220), GetColor(255, 180, 220), FALSE);
+			SetDrawBlendMode(DX_BLENDMODE_NOBLEND, 0);
+		}
+		TouhouTheme::DrawPlayerBillboard(m_X, PLAYER_Y, m_Z, IsFeverMode());
+		if (CollisionDebug::IsVisible())
+			DrawSphere3D(pos, PLAYER_COLLISION_RADIUS, 6, GetColor(255, 255, 255), GetColor(255, 255, 255), FALSE);
+		return;
+	}
+
+	// [VISUAL_RICH] 後方トレイル3連 + 加算ハロー（光感）
+	if (VISUAL_RICH)
+	{
+		SetDrawBlendMode(DX_BLENDMODE_ADD, 70);
+		for (int t = 0; t < 3; t++)
+		{
+			float ofs = 18.0f + t * 14.0f;
+			float scl = 0.75f - t * 0.18f;
+			VECTOR tp = VGet(m_X, PLAYER_Y, m_Z - ofs);
+			DrawSphere3D(tp, PLAYER_DRAW_SIZE * scl, 6, bodyColor, bodyColor, FALSE);
+		}
+		SetDrawBlendMode(DX_BLENDMODE_ADD, RICH_PLAYER_HALO_ALPHA);
+		float haloR = PLAYER_DRAW_SIZE * 1.7f + sinf((float)GetNowCount() / 120.0f) * 1.5f;
+		DrawSphere3D(pos, haloR, 6, bodyColor, bodyColor, FALSE);
+		SetDrawBlendMode(DX_BLENDMODE_NOBLEND, 0);
+	}
+	else
+	{
+		SetDrawBlendMode(DX_BLENDMODE_ADD, 90);
+		VECTOR trailPos = VGet(m_X, PLAYER_Y, m_Z - 22.0f);
+		DrawSphere3D(trailPos, PLAYER_DRAW_SIZE * 0.75f, 6, bodyColor, bodyColor, FALSE);
 		SetDrawBlendMode(DX_BLENDMODE_NOBLEND, 0);
 	}
 
-	if (slowMode && (m_PracticeMode || m_ScoreAttackMode))
+	// [VISUAL_STYLE] 小型メカ風シルエット / 従来の球
+	if (UseSilhouetteStyle())
 	{
-		DrawSphere3D(pos, PLAYER_HITBOX, 6, GetColor(255, 255, 255), GetColor(255, 255, 255), FALSE);
+		SilhouetteDraw::DrawPlayerMecha(m_X, PLAYER_Y, m_Z, bodyColor, glowColor, IsFeverMode());
+	}
+	else
+	{
+		DrawSphere3D(pos, PLAYER_DRAW_SIZE, 6, bodyColor, glowColor, FALSE);
+	}
+
+	if (m_ChargeFrames > 0)
+	{
+		float cr = (float)m_ChargeFrames / (float)CHARGE_MAX_FRAMES;
+		if (cr > 1.0f) cr = 1.0f;
+		SetDrawBlendMode(DX_BLENDMODE_ADD, (int)(80 + cr * 120));
+		float ringR = PLAYER_DRAW_SIZE * (1.1f + cr * 0.9f) + sinf((float)GetNowCount() / 70.0f) * 2.0f;
+		DrawSphere3D(pos, ringR, 8, GetColor(255, 120, 255), GetColor(255, 200, 255), FALSE);
+		SetDrawBlendMode(DX_BLENDMODE_NOBLEND, 0);
+	}
+
+	if (IsFeverMode())
+	{
+		SetDrawBlendMode(DX_BLENDMODE_ADD, 55);
+		float auraRadius = PLAYER_DRAW_SIZE + 5.0f + sinf((float)GetNowCount() / 120.0f) * 2.0f;
+		DrawSphere3D(pos, auraRadius, 6, GetColor(255, 200, 80), GetColor(255, 220, 140), FALSE);
+		SetDrawBlendMode(DX_BLENDMODE_NOBLEND, 0);
+	}
+
+	if (CollisionDebug::IsVisible())
+	{
+		DrawSphere3D(pos, PLAYER_COLLISION_RADIUS, 6, GetColor(255, 255, 255), GetColor(255, 255, 255), FALSE);
 	}
 }
 
@@ -243,7 +337,7 @@ void Player::OnHit()
 	m_GrazeRushCount = 0;
 	m_GrazeRushTimer = 0;
 
-	if (!m_PracticeMode && m_Lives < 0)
+	if (!m_PracticeMode && !m_ScoreAttackMode && m_Lives <= 0)
 		m_Alive = false;
 }
 

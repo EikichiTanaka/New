@@ -20,7 +20,7 @@ public:
 	float GetX() const { return m_X; }
 	float GetZ() const { return m_Z; }
 	float GetY() const { return PLAYER_Y; }
-	float GetRadius() const { return PLAYER_HITBOX; }
+	float GetRadius() const { return PLAYER_COLLISION_RADIUS; }
 	bool IsInvincible() const { return m_InvTimer > 0; }
 	bool IsAlive() const { return m_Alive; }
 	bool IsPracticeMode() const { return m_PracticeMode; }

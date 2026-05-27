@@ -10,8 +10,16 @@
 #include "Common/UiDraw.h"
 #include "Common/GameScreen.h"
 #include "Game/Collision.h"
+#include "Game/CollisionDebug.h"
+#include "Game/TouhouTheme.h"
 #include "DxLib.h"
 #include <cmath>
+
+GameScene::~GameScene()
+{
+	if (UseTouhouTheme())
+		TouhouTheme::Final();
+}
 
 // --- Init: ゲームシーン全体の初期化 ---
 void GameScene::Init()
@@ -20,17 +28,24 @@ void GameScene::Init()
 	m_ClearDelayTimer = 0;
 
 	m_Paused = false;
+	m_PauseMenuCursor = 0;
+	m_QuitConfirmActive = false;
+	m_LivesLostFxTimer = 0;
+	m_LivesLostFxShowText = false;
 	m_HitStopTimer = 0;
 	m_PrevWave = 1;
 	m_WaveNoDamage = true;
 	m_PrevSpellBreakTimer = 0;
+	m_BombKeyHeld = false;
+	m_FeverScreenFlashTimer = 0;
 
 	const bool practice = (g_Session.playMode == PlayMode::Practice);
 	const bool scoreAttack = (g_Session.playMode == PlayMode::ScoreAttack);
 	m_Player.Init(practice, scoreAttack);
 	m_Bullets.Init();
 	m_Enemies.Init(g_GameData.difficulty);
-	m_Enemies.ConfigureStage(g_Session.stageStart, g_Session.playMode, g_Session.stageChapter);
+	m_Enemies.ConfigureStage(g_Session.stageStart, g_Session.playMode, g_Session.stageChapter,
+		g_Session.bossRushStartPhase);
 	m_Effect.Init();
 	InitItems();
 
@@ -43,6 +58,8 @@ void GameScene::Init()
 	g_GameData.scoreMultiplier = 1.0f;
 
 	SoundSynth::Init();
+	if (UseTouhouTheme())
+		TouhouTheme::Init();
 	BgmPlayer::Stop();
 	UpdateBackgroundBgm();
 
@@ -66,6 +83,8 @@ void GameScene::Init()
 	m_LookZ = PLAYER_START_Z + 155.0f;
 	m_ShakeTimer = 0;
 	m_ShakeMag = 0.0f;
+
+	CollisionDebug::SetVisible(false);
 }
 
 // --- Update: 1フレームの更新処理 ---
@@ -73,17 +92,33 @@ SceneType GameScene::Update()
 {
 	m_FrameCount++;
 
+	if (KeyHelper::IsTrigger(KEY_INPUT_F3))
+		CollisionDebug::Toggle();
+
 	if (m_ShakeTimer > 0)
 	{
 		m_ShakeTimer--;
 		if (m_ShakeTimer == 0) m_ShakeMag = 0.0f;
 	}
 
-	if (KeyHelper::IsTrigger(KEY_INPUT_P))
-		m_Paused = !m_Paused;
+	if (m_LivesLostFxTimer > 0)
+		m_LivesLostFxTimer--;
 
-	if (m_Paused)
-		return SceneType::None;
+	// ポーズを開く（既にポーズ中は UpdatePauseMenu 側だけが入力を受け取る）
+	// ※ P/ESC でトグルすると同フレームで閉じてしまうため、開く処理は非ポーズ時のみ
+	if (!m_Paused)
+	{
+		if (KeyHelper::IsTrigger(KEY_INPUT_P) || KeyHelper::IsTrigger(KEY_INPUT_ESCAPE))
+		{
+			m_Paused = true;
+			m_PauseMenuCursor = 0;
+			m_QuitConfirmActive = false;
+		}
+	}
+	else
+	{
+		return UpdatePauseMenu();
+	}
 
 	if (m_HitStopTimer > 0)
 	{
@@ -94,17 +129,15 @@ SceneType GameScene::Update()
 
 	if (m_BossHitFxCooldown > 0) m_BossHitFxCooldown--;
 
-	(void)m_Player.ConsumeFeverStartFlash();
-
-	// ESC キーでゲーム強制終了（タイトルへ）
-	if (CheckHitKey(KEY_INPUT_ESCAPE))
+	if (m_Player.ConsumeFeverStartFlash())
 	{
-		DisableSceneLighting();
-		DeleteLightHandleAll();
-		BgmPlayer::Stop();
-		// SoundSynth::Final() は呼ばない（次プレイで効果音を作り直すのを防止）
-		return SceneType::Title;
+		m_Effect.TriggerFeverBurst(m_Player.GetX(), PLAYER_Y, m_Player.GetZ());
+		AddScreenShake(8, 5.0f);
+		m_FeverScreenFlashTimer = 18;
 	}
+	m_Effect.SetFeverActive(m_Player.IsFeverMode());
+	if (m_FeverScreenFlashTimer > 0)
+		m_FeverScreenFlashTimer--;
 
 	g_GameData.playTimeSec = m_FrameCount / 60;
 	g_GameData.livesLeft = m_Player.GetLives();
@@ -163,12 +196,11 @@ SceneType GameScene::Update()
 	// --- 通常のゲームプレイ更新 ---
 	m_Player.Update(m_Bullets);
 
-	// ボム入力判定 (X キー または B キー)
-	bool isBombPressed = CheckHitKey(KEY_INPUT_X) != 0 || CheckHitKey(KEY_INPUT_B) != 0;
-	if (isBombPressed)
-	{
+	// ボム入力判定 (X キー または B キー) — 押した瞬間のみ
+	const bool isBombPressed = CheckHitKey(KEY_INPUT_X) != 0 || CheckHitKey(KEY_INPUT_B) != 0;
+	if (isBombPressed && !m_BombKeyHeld)
 		ExecuteBomb();
-	}
+	m_BombKeyHeld = isBombPressed;
 
 	int wave = m_Enemies.GetCurrentWave();
 	if (wave != m_PrevWave)
@@ -184,7 +216,13 @@ SceneType GameScene::Update()
 
 	int spellTimer = m_Enemies.GetSpellBreakTimer();
 	if (spellTimer > 0 && m_PrevSpellBreakTimer <= 0)
+	{
 		SpawnSpellBreakBonuses();
+		int bombs = m_Player.GetBombCount() + BOMB_PHASE_CLEAR_BONUS;
+		if (bombs > BOMB_STOCK_MAX)
+			bombs = BOMB_STOCK_MAX;
+		m_Player.SetBombCount(bombs);
+	}
 	m_PrevSpellBreakTimer = spellTimer;
 
 	if (m_Enemies.GetBossPhase() > g_GameData.runStats.bossMaxPhaseReached)
@@ -231,10 +269,26 @@ void GameScene::DisableSceneLighting()
 // --- Draw: 画面描画処理（Tutorial と同じくライティング完全 OFF 方針） ---
 void GameScene::Draw()
 {
+	SetUseZBuffer3D(TRUE);
+	SetWriteZBuffer3D(TRUE);
+
 	SetBackgroundColor(24, 36, 58);
 	SetUseLighting(FALSE);
 
+	// 背景（東方テーマ時は雲、それ以外は派手/軽量をオプションで切替）
+	if (UseTouhouTheme() && VISUAL_RICH)
+		TouhouTheme::DrawCloudParallax(m_FrameCount);
+	else if (GameOptionsUseFlashyBackground())
+		DrawFlashySkyBackground();
+	else if (GameOptionsUseLiteBackground())
+		DrawLiteSkyBackground();
+
 	SetupCamera();
+
+	if (GameOptionsUseFlashyBackground() && BACKGROUND_FLASHY_AMBIENT_3D)
+		DrawFlashyAmbientBackdrop3D();
+	else if (GameOptionsUseLiteBackground() && BACKGROUND_LITE_AMBIENT_3D)
+		DrawLiteAmbientBackdrop3D();
 
 	DrawField();
 	m_Player.Draw();
@@ -242,12 +296,276 @@ void GameScene::Draw()
 	m_Bullets.DrawLit();
 	DrawItems();
 	m_Bullets.DrawEnemiesUnlit();
+	CollisionDebug::Draw(m_Player, m_Bullets, m_Enemies);
 	BeginScreenSpaceDraw();
 	m_Effect.Draw();
+	DrawScreenFx();
+	m_Effect.DrawScreenOverlay();
 
 	DrawHud();
+	CollisionDebug::DrawHudIndicator();
 	DrawBossIntroOverlay();
-	if (m_Paused) DrawPauseOverlay();
+	if (m_Paused)
+	{
+		DrawPauseOverlay();
+		DrawPauseMenu();
+		if (m_QuitConfirmActive)
+			DrawQuitConfirmOverlay();
+	}
+	if (m_LivesLostFxTimer > 0)
+		DrawLivesLostOverlay();
+}
+
+// [BACKGROUND_FLASHY] 2D: 多層グラデ・星雲・流れ星・瞬き星
+void GameScene::DrawFlashySkyBackground() const
+{
+	const int scroll = m_FrameCount * 3;
+	const float pulse = 0.5f + 0.5f * sinf((float)m_FrameCount * 0.04f);
+
+	SetDrawBlendMode(DX_BLENDMODE_ALPHA, 160);
+	DrawBox(0, 0, SCREEN_WIDTH, SCREEN_HEIGHT / 3, GetColor(12, 8, 45), TRUE);
+	DrawBox(0, SCREEN_HEIGHT / 3, SCREEN_WIDTH, SCREEN_HEIGHT * 2 / 3, GetColor(8, 18, 55), TRUE);
+	DrawBox(0, SCREEN_HEIGHT * 2 / 3, SCREEN_WIDTH, SCREEN_HEIGHT, GetColor(25, 6, 38), TRUE);
+	SetDrawBlendMode(DX_BLENDMODE_NOBLEND, 0);
+
+	for (int y = 0; y < SCREEN_HEIGHT; y += 2)
+	{
+		float t = (float)y / (float)SCREEN_HEIGHT;
+		int r = (int)(6 + 28 * (1.0f - t) + pulse * 12.0f);
+		int g = (int)(10 + 32 * (1.0f - t));
+		int b = (int)(28 + 62 * (1.0f - t) + pulse * 18.0f);
+		DrawLine(0, y, SCREEN_WIDTH, y, GetColor(r, g, b));
+	}
+
+	// オーロラ帯
+	SetDrawBlendMode(DX_BLENDMODE_ADD, (int)(50 + pulse * 40.0f));
+	for (int band = 0; band < 4; band++)
+	{
+		int by = 60 + band * 55 + (int)(sinf((float)m_FrameCount * 0.03f + band) * 12.0f);
+		unsigned int ac = (band & 1) ? GetColor(80, 20, 120) : GetColor(20, 80, 140);
+		DrawBox(0, by, SCREEN_WIDTH, by + 18, ac, TRUE);
+	}
+	SetDrawBlendMode(DX_BLENDMODE_NOBLEND, 0);
+
+	// 星
+	for (int i = 0; i < BACKGROUND_FLASHY_STAR_COUNT; i++)
+	{
+		int sx = (i * 131 + scroll) % SCREEN_WIDTH;
+		int sy = (i * 71 + (i & 1 ? scroll / 3 : 0)) % SCREEN_HEIGHT;
+		int br = 100 + (i * 17) % 155;
+		if (((m_FrameCount + i * 7) % 45) < 6)
+			br = 255;
+		unsigned int col = GetColor(br, br, br + 35);
+		DrawPixel(sx, sy, col);
+		if ((i & 3) == 0)
+		{
+			DrawPixel(sx + 1, sy, GetColor(br / 2, br / 2, br / 2 + 20));
+			if ((i & 7) == 0)
+				DrawCircle(sx, sy, 2, GetColor(220, 240, 255), TRUE);
+		}
+	}
+
+	// 流れ星
+	SetDrawBlendMode(DX_BLENDMODE_ADD, 180);
+	for (int m = 0; m < BACKGROUND_FLASHY_METEOR_COUNT; m++)
+	{
+		const int life = 36;
+		int phase = (m_FrameCount * 4 + m * 37) % (life * 5);
+		if (phase >= life) continue;
+		int x = (m * 173 + phase * 14) % (SCREEN_WIDTH + 80) - 40;
+		int y = (m * 61 + phase * 9) % (SCREEN_HEIGHT / 2 + 40);
+		unsigned int mc = (m & 1) ? GetColor(200, 255, 255) : GetColor(255, 200, 255);
+		DrawLine(x, y, x - 28 - phase, y + 16 + phase / 2, mc);
+		DrawLine(x, y, x - 18 - phase, y + 10 + phase / 2, GetColor(255, 255, 255));
+	}
+	SetDrawBlendMode(DX_BLENDMODE_NOBLEND, 0);
+
+	// 星雲（加算）
+	SetDrawBlendMode(DX_BLENDMODE_ADD, (int)(45 + pulse * 35.0f));
+	for (int n = 0; n < BACKGROUND_FLASHY_NEBULA_COUNT; n++)
+	{
+		int cx = (n * 220 + scroll / 2) % SCREEN_WIDTH;
+		int cy = 50 + (n * 83) % (SCREEN_HEIGHT * 2 / 3);
+		int radius = 100 + (n * 41) % 90;
+		unsigned int neb = (n % 3 == 0) ? GetColor(90, 30, 140)
+			: (n % 3 == 1) ? GetColor(30, 70, 160)
+			: GetColor(140, 40, 90);
+		DrawCircle(cx, cy, radius, neb, TRUE);
+		DrawCircle(cx + 40, cy + 25, radius / 2, neb, TRUE);
+		DrawCircle(cx - 30, cy + 10, radius / 3, neb, TRUE);
+	}
+
+	// サイドビネット
+	SetDrawBlendMode(DX_BLENDMODE_ALPHA, 90);
+	DrawBox(0, 0, 48, SCREEN_HEIGHT, GetColor(0, 0, 0), TRUE);
+	DrawBox(SCREEN_WIDTH - 48, 0, SCREEN_WIDTH, SCREEN_HEIGHT, GetColor(0, 0, 0), TRUE);
+	SetDrawBlendMode(DX_BLENDMODE_NOBLEND, 0);
+}
+
+// [BACKGROUND_FLASHY] 3D: 光の塊 + ライトピラー
+void GameScene::DrawFlashyAmbientBackdrop3D() const
+{
+	const float t = (float)m_FrameCount * 0.01f;
+	const float pulse = 0.6f + 0.4f * sinf((float)m_FrameCount * 0.05f);
+
+	struct Blob { float x, y, z, r; int cr, cg, cb; };
+	static const Blob blobs[] = {
+		{ -300.0f, 75.0f,  450.0f, 175.0f, 25, 45, 95 },
+		{  320.0f, 60.0f,  340.0f, 145.0f, 75, 25, 85 },
+		{    0.0f, 95.0f,  540.0f, 210.0f, 18, 55, 88 },
+		{ -200.0f, 50.0f,  280.0f, 125.0f, 45, 35, 82 },
+		{  240.0f, 85.0f,  500.0f, 165.0f, 32, 65, 110 },
+		{ -120.0f, 40.0f,  380.0f, 130.0f, 55, 20, 75 },
+		{  160.0f, 70.0f,  420.0f, 155.0f, 28, 80, 95 },
+		{  -60.0f, 55.0f,  300.0f, 140.0f, 40, 50, 100 },
+	};
+	const int blobCount = (int)(sizeof(blobs) / sizeof(blobs[0]));
+	const int drawBlobs = blobCount < BACKGROUND_FLASHY_AMBIENT_BLOBS
+		? blobCount : BACKGROUND_FLASHY_AMBIENT_BLOBS;
+
+	SetDrawBlendMode(DX_BLENDMODE_ADD, (int)(35 + pulse * 40.0f));
+	for (int i = 0; i < drawBlobs; i++)
+	{
+		float ox = sinf(t + (float)i * 1.1f) * 24.0f;
+		float oy = cosf(t * 0.8f + (float)i * 0.9f) * 12.0f;
+		VECTOR c = VGet(blobs[i].x + ox, blobs[i].y + oy, blobs[i].z);
+		unsigned int col = GetColor(blobs[i].cr, blobs[i].cg, blobs[i].cb);
+		DrawSphere3D(c, blobs[i].r, 8, col, col, FALSE);
+		DrawSphere3D(c, blobs[i].r * 1.35f, 6, col, col, FALSE);
+	}
+
+	static const float pillarX[] = { -340.0f, -160.0f, 160.0f, 340.0f };
+	for (int p = 0; p < 4; p++)
+	{
+		float flicker = 0.7f + 0.3f * sinf(t * 2.0f + (float)p * 1.7f);
+		unsigned int pc = (p & 1) ? GetColor(0, (int)(180 * flicker), 255) : GetColor(255, 0, (int)(160 * flicker));
+		DrawLine3D(VGet(pillarX[p], 0.0f, -FIELD_HALF_D), VGet(pillarX[p], 120.0f, FIELD_HALF_D * 0.3f), pc);
+	}
+	SetDrawBlendMode(DX_BLENDMODE_NOBLEND, 0);
+}
+
+// [BACKGROUND_FLASHY] 床: 二重ネオングリッド + 脈動する枠
+void GameScene::DrawFlashyFieldGrid() const
+{
+	const float halfW = FIELD_HALF_W;
+	const float halfD = FIELD_HALF_D;
+	const float gridStep = (float)FIELD_GRID_SPACING;
+	const float scroll = (float)((m_FrameCount * BACKGROUND_FLASHY_GRID_SCROLL_SPEED) % (int)gridStep);
+	const float pulse = 0.55f + 0.45f * sinf((float)m_FrameCount * 0.07f);
+
+	SetDrawBlendMode(DX_BLENDMODE_ADD, (int)(100 + pulse * 80.0f));
+
+	int gridGreen = GetColor(0, (int)(140 + pulse * 80.0f), 70);
+	for (float z = -halfD + scroll; z <= halfD; z += gridStep)
+		DrawLine3D(VGet(-halfW, 0.22f, z), VGet(halfW, 0.22f, z), gridGreen);
+
+	int gridCyan = GetColor(0, (int)(200 + pulse * 55.0f), (int)(160 + pulse * 40.0f));
+	for (float x = -halfW; x <= halfW; x += gridStep)
+		DrawLine3D(VGet(x, 0.18f, -halfD), VGet(x, 0.18f, halfD), gridCyan);
+
+	int gridMagenta = GetColor((int)(80 + pulse * 60.0f), 0, (int)(120 + pulse * 50.0f));
+	for (float z = -halfD + scroll * 0.5f; z <= halfD; z += gridStep * 2.0f)
+		DrawLine3D(VGet(-halfW, 0.08f, z), VGet(halfW, 0.08f, z), gridMagenta);
+
+	int borderColor = GetColor(0, 255, (int)(140 + pulse * 115.0f));
+	DrawLine3D(VGet(-halfW, 0.42f, -halfD), VGet(halfW, 0.42f, -halfD), borderColor);
+	DrawLine3D(VGet(-halfW, 0.42f, halfD), VGet(halfW, 0.42f, halfD), borderColor);
+	DrawLine3D(VGet(-halfW, 0.42f, -halfD), VGet(-halfW, 0.42f, halfD), borderColor);
+	DrawLine3D(VGet(halfW, 0.42f, -halfD), VGet(halfW, 0.42f, halfD), borderColor);
+
+	int frontLine = GetColor(255, (int)(120 + pulse * 80.0f), 255);
+	DrawLine3D(VGet(-halfW, 0.48f, -halfD + 35.0f), VGet(halfW, 0.48f, -halfD + 35.0f), frontLine);
+	DrawLine3D(VGet(-halfW, 0.35f, -halfD + 80.0f), VGet(halfW, 0.35f, -halfD + 80.0f),
+		GetColor(0, (int)(180 + pulse * 75.0f), 220));
+
+	// 奥の地平線グロー
+	int horizon = GetColor(255, 80, 200);
+	DrawLine3D(VGet(-halfW, 0.5f, halfD - 20.0f), VGet(halfW, 0.5f, halfD - 20.0f), horizon);
+
+	SetDrawBlendMode(DX_BLENDMODE_NOBLEND, 0);
+}
+
+// [BACKGROUND_LITE] 2D: シンプルなグラデ + 星のみ
+void GameScene::DrawLiteSkyBackground() const
+{
+	const int scroll = m_FrameCount * 2;
+
+	for (int y = 0; y < SCREEN_HEIGHT; y += 2)
+	{
+		float t = (float)y / (float)SCREEN_HEIGHT;
+		int r = (int)(8 + 18 * (1.0f - t));
+		int g = (int)(12 + 22 * (1.0f - t));
+		int b = (int)(22 + 40 * (1.0f - t));
+		DrawLine(0, y, SCREEN_WIDTH, y, GetColor(r, g, b));
+	}
+
+	for (int i = 0; i < BACKGROUND_LITE_STAR_COUNT; i++)
+	{
+		int sx = (i * 131 + scroll) % SCREEN_WIDTH;
+		int sy = (i * 71) % SCREEN_HEIGHT;
+		int br = 120 + (i * 19) % 120;
+		if (((m_FrameCount + i * 11) % 60) < 4)
+			br = 220;
+		DrawPixel(sx, sy, GetColor(br, br, br + 20));
+	}
+
+	SetDrawBlendMode(DX_BLENDMODE_ALPHA, 40);
+	for (int n = 0; n < BACKGROUND_LITE_NEBULA_COUNT; n++)
+	{
+		int cx = (n * 320 + scroll) % SCREEN_WIDTH;
+		int cy = 80 + (n * 140) % (SCREEN_HEIGHT / 2);
+		DrawCircle(cx, cy, 70 + n * 25, GetColor(25, 35, 70), TRUE);
+	}
+	SetDrawBlendMode(DX_BLENDMODE_NOBLEND, 0);
+}
+
+// [BACKGROUND_LITE] 3D: 遠景の光球のみ
+void GameScene::DrawLiteAmbientBackdrop3D() const
+{
+	const float t = (float)m_FrameCount * 0.008f;
+
+	struct Blob { float x, y, z, r; int cr, cg, cb; };
+	static const Blob blobs[] = {
+		{ -220.0f, 70.0f, 420.0f, 150.0f, 20, 40, 80 },
+		{  200.0f, 55.0f, 380.0f, 130.0f, 35, 25, 70 },
+		{    0.0f, 80.0f, 500.0f, 180.0f, 15, 45, 75 },
+	};
+	const int blobCount = (int)(sizeof(blobs) / sizeof(blobs[0]));
+	const int drawBlobs = blobCount < BACKGROUND_LITE_AMBIENT_BLOBS
+		? blobCount : BACKGROUND_LITE_AMBIENT_BLOBS;
+
+	SetDrawBlendMode(DX_BLENDMODE_ADD, 28);
+	for (int i = 0; i < drawBlobs; i++)
+	{
+		float ox = sinf(t + (float)i) * 10.0f;
+		VECTOR c = VGet(blobs[i].x + ox, blobs[i].y, blobs[i].z);
+		unsigned int col = GetColor(blobs[i].cr, blobs[i].cg, blobs[i].cb);
+		DrawSphere3D(c, blobs[i].r, 6, col, col, FALSE);
+	}
+	SetDrawBlendMode(DX_BLENDMODE_NOBLEND, 0);
+}
+
+// [BACKGROUND_LITE] 床: 単色のスクロールグリッド
+void GameScene::DrawLiteFieldGrid() const
+{
+	const float halfW = FIELD_HALF_W;
+	const float halfD = FIELD_HALF_D;
+	const float gridStep = (float)FIELD_GRID_SPACING;
+	const float scroll = (float)((m_FrameCount * BACKGROUND_LITE_GRID_SCROLL_SPEED) % (int)gridStep);
+
+	SetDrawBlendMode(DX_BLENDMODE_ADD, 70);
+	int gridCol = GetColor(0, 120, 90);
+	for (float z = -halfD + scroll; z <= halfD; z += gridStep)
+		DrawLine3D(VGet(-halfW, 0.2f, z), VGet(halfW, 0.2f, z), gridCol);
+	for (float x = -halfW; x <= halfW; x += gridStep)
+		DrawLine3D(VGet(x, 0.18f, -halfD), VGet(x, 0.18f, halfD), GetColor(0, 90, 130));
+
+	int borderCol = GetColor(0, 180, 140);
+	DrawLine3D(VGet(-halfW, 0.3f, -halfD), VGet(halfW, 0.3f, -halfD), borderCol);
+	DrawLine3D(VGet(-halfW, 0.3f, halfD), VGet(halfW, 0.3f, halfD), borderCol);
+	DrawLine3D(VGet(-halfW, 0.3f, -halfD), VGet(-halfW, 0.3f, halfD), borderCol);
+	DrawLine3D(VGet(halfW, 0.3f, -halfD), VGet(halfW, 0.3f, halfD), borderCol);
+	SetDrawBlendMode(DX_BLENDMODE_NOBLEND, 0);
 }
 
 void GameScene::DrawPauseOverlay()
@@ -257,9 +575,164 @@ void GameScene::DrawPauseOverlay()
 	DrawBox(0, 0, SCREEN_WIDTH, SCREEN_HEIGHT, GetColor(0, 0, 0), TRUE);
 	SetDrawBlendMode(DX_BLENDMODE_NOBLEND, 0);
 	SetFontSize(48);
-	DrawTextUtf8(SCREEN_WIDTH / 2 - 100, SCREEN_HEIGHT / 2 - 24, GetColor(255, 255, 255), "ＰＡＵＳＥ");
-	SetFontSize(20);
-	DrawTextUtf8(SCREEN_WIDTH / 2 - 120, SCREEN_HEIGHT / 2 + 40, GetColor(200, 200, 220), "Pキーで再開");
+	DrawTextUtf8(SCREEN_WIDTH / 2 - 100, SCREEN_HEIGHT / 2 - 120, GetColor(255, 255, 255), "ＰＡＵＳＥ");
+}
+
+void GameScene::DrawPauseMenu()
+{
+	BeginScreenSpaceDraw();
+	static const char* items[] = {
+		"再開",
+		"リトライ",
+		"オプション",
+		"タイトルへ"
+	};
+	const int count = 4;
+	const int boxW = 360;
+	const int boxH = 56;
+	const int startY = SCREEN_HEIGHT / 2 - 20;
+
+	SetDrawBlendMode(DX_BLENDMODE_ALPHA, 220);
+	DrawBox(SCREEN_WIDTH / 2 - boxW / 2 - 8, startY - 16,
+		SCREEN_WIDTH / 2 + boxW / 2 + 8, startY + count * boxH + 8, GetColor(8, 16, 36), TRUE);
+	SetDrawBlendMode(DX_BLENDMODE_NOBLEND, 0);
+
+	for (int i = 0; i < count; i++)
+	{
+		int y = startY + i * boxH;
+		bool sel = (i == m_PauseMenuCursor);
+		if (sel)
+		{
+			SetDrawBlendMode(DX_BLENDMODE_ALPHA, 200);
+			DrawBox(SCREEN_WIDTH / 2 - boxW / 2, y, SCREEN_WIDTH / 2 + boxW / 2, y + boxH - 6,
+				GetColor(0, 90, 120), TRUE);
+			SetDrawBlendMode(DX_BLENDMODE_NOBLEND, 0);
+		}
+		SetFontSize(26);
+		unsigned int col = sel ? GetColor(255, 255, 120) : GetColor(200, 210, 230);
+		DrawTextUtf8(SCREEN_WIDTH / 2 - 80, y + 14, col, items[i]);
+	}
+
+	SetFontSize(18);
+	DrawTextUtf8(SCREEN_WIDTH / 2 - 200, startY + count * boxH + 24,
+		GetColor(160, 170, 190), "↑↓選択  Enter決定  P/ESC:メニュー閉じる");
+}
+
+void GameScene::DrawQuitConfirmOverlay()
+{
+	BeginScreenSpaceDraw();
+	SetDrawBlendMode(DX_BLENDMODE_ALPHA, 200);
+	DrawBox(SCREEN_WIDTH / 2 - 220, SCREEN_HEIGHT / 2 - 70,
+		SCREEN_WIDTH / 2 + 220, SCREEN_HEIGHT / 2 + 90, GetColor(30, 8, 20), TRUE);
+	SetDrawBlendMode(DX_BLENDMODE_NOBLEND, 0);
+
+	SetFontSize(28);
+	DrawTextUtf8(SCREEN_WIDTH / 2 - 180, SCREEN_HEIGHT / 2 - 48, GetColor(255, 200, 200),
+		"タイトルに戻りますか？");
+	SetFontSize(22);
+	DrawTextUtf8(SCREEN_WIDTH / 2 - 160, SCREEN_HEIGHT / 2 + 8, GetColor(255, 255, 200),
+		"進行中のプレイは保存されません");
+	SetFontSize(24);
+	DrawTextUtf8(SCREEN_WIDTH / 2 - 120, SCREEN_HEIGHT / 2 + 48, GetColor(120, 255, 180), "Y: はい");
+	DrawTextUtf8(SCREEN_WIDTH / 2 + 20, SCREEN_HEIGHT / 2 + 48, GetColor(255, 180, 180), "N: いいえ");
+}
+
+void GameScene::DrawLivesLostOverlay()
+{
+	BeginScreenSpaceDraw();
+	float t = (float)m_LivesLostFxTimer / 75.0f;
+	int flashA = (int)(180.0f * t);
+	if (flashA > 180) flashA = 180;
+	SetDrawBlendMode(DX_BLENDMODE_ALPHA, flashA);
+	DrawBox(0, 0, SCREEN_WIDTH, SCREEN_HEIGHT, GetColor(80, 0, 0), TRUE);
+	SetDrawBlendMode(DX_BLENDMODE_NOBLEND, 0);
+
+	if (!m_LivesLostFxShowText)
+		return;
+
+	int cx = SCREEN_WIDTH / 2;
+	int cy = SCREEN_HEIGHT / 2 - 20;
+	float scale = 0.85f + 0.15f * (1.0f - t);
+	int fontBig = (int)(56.0f * scale);
+	if (fontBig < 36) fontBig = 36;
+	SetFontSize(fontBig);
+
+	const bool practice = (g_Session.playMode == PlayMode::Practice);
+	const bool scoreAtk = (g_Session.playMode == PlayMode::ScoreAttack);
+	if (practice || scoreAtk)
+	{
+		DrawTextUtf8(cx - 80, cy - 20, GetColor(255, 80, 80), "被弾！");
+	}
+	else
+	{
+		DrawTextUtf8(cx - 120, cy - 30, GetColor(255, 60, 80), "残機  -1");
+		SetFontSize(32);
+		int lives = m_Player.GetLives();
+		if (lives < 0) lives = 0;
+		DrawFormatString(cx - 100, cy + 24, GetColor(255, 220, 180), "残り %d", lives);
+	}
+}
+
+void GameScene::ExitToTitle()
+{
+	DisableSceneLighting();
+	DeleteLightHandleAll();
+	BgmPlayer::Stop();
+}
+
+SceneType GameScene::UpdatePauseMenu()
+{
+	if (m_QuitConfirmActive)
+	{
+		if (KeyHelper::IsTrigger(KEY_INPUT_Y))
+		{
+			ExitToTitle();
+			return SceneType::Title;
+		}
+		if (KeyHelper::IsTrigger(KEY_INPUT_N) || KeyHelper::IsCancelTrigger())
+			m_QuitConfirmActive = false;
+		return SceneType::None;
+	}
+
+	if (KeyHelper::IsMenuMoveTrigger(KEY_INPUT_UP))
+	{
+		m_PauseMenuCursor--;
+		if (m_PauseMenuCursor < 0) m_PauseMenuCursor = 3;
+	}
+	if (KeyHelper::IsMenuMoveTrigger(KEY_INPUT_DOWN))
+	{
+		m_PauseMenuCursor++;
+		if (m_PauseMenuCursor > 3) m_PauseMenuCursor = 0;
+	}
+
+	if (KeyHelper::IsTrigger(KEY_INPUT_P) || KeyHelper::IsCancelTrigger())
+	{
+		m_Paused = false;
+		m_QuitConfirmActive = false;
+		return SceneType::None;
+	}
+
+	if (!KeyHelper::IsConfirmTrigger())
+		return SceneType::None;
+
+	switch (m_PauseMenuCursor)
+	{
+	case 0:
+		m_Paused = false;
+		return SceneType::None;
+	case 1:
+		ExitToTitle();
+		return SceneType::Game;
+	case 2:
+		g_Session.returnToGameAfterOptions = true;
+		ExitToTitle();
+		return SceneType::Options;
+	case 3:
+		m_QuitConfirmActive = true;
+		return SceneType::None;
+	default:
+		return SceneType::None;
+	}
 }
 
 void GameScene::FinalizeRunStats()
@@ -325,15 +798,35 @@ void GameScene::DrawBossIntroOverlay() const
 	DrawBox(0, 0, SCREEN_WIDTH, SCREEN_HEIGHT, GetColor(40, 0, 60), TRUE);
 	SetDrawBlendMode(DX_BLENDMODE_NOBLEND, 0);
 
+	const int chapter = m_Enemies.GetStageChapter();
+	const int phase = m_Enemies.GetBossPhase();
+
+	SetFontSize(24);
+	DrawTextUtf8(SCREEN_WIDTH / 2 - 160, 72, GetColor(255, 200, 220), GetBossDisplayName(chapter));
+
 	SetFontSize(42);
-	DrawTextUtf8(SCREEN_WIDTH / 2 - 200, 100, GetColor(255, 80, 120), "Spell Card");
-	SetFontSize(28);
-	const char* warn = (m_Enemies.GetStageChapter() >= 1)
-		? "第２面 ボス戦開始"
-		: "ボス戦開始";
-	DrawTextUtf8(SCREEN_WIDTH / 2 - 140, 155, GetColor(255, 220, 180), warn);
+	DrawTextUtf8(SCREEN_WIDTH / 2 - 120, 108, GetColor(255, 80, 120), "Spell Card");
+
+	SetFontSize(26);
+	DrawTextUtf8(SCREEN_WIDTH / 2 - 200, 158, GetColor(255, 240, 160), GetSpellCardName(chapter, phase));
+
 	SetFontSize(20);
-	DrawTextUtf8(SCREEN_WIDTH / 2 - 180, 200, GetColor(200, 200, 255), "無敵・弾消去中…");
+	const char* warn = BOSS_RUSH_MODE
+		? "ＢＯＳＳ ＲＵＳＨ"
+		: ((chapter >= 1) ? "第２面 ボス戦開始" : "第１面 ボス戦開始");
+	DrawTextUtf8(SCREEN_WIDTH / 2 - 140, 200, GetColor(255, 220, 180), warn);
+	if (BOSS_RUSH_MODE)
+	{
+		char diffLine[48];
+		sprintf_s(diffLine, "難易度　%s", GetDifficultyDisplayName(g_GameData.difficulty));
+		DrawTextUtf8(SCREEN_WIDTH / 2 - 120, 228, GetColor(200, 220, 255), diffLine);
+	}
+	else
+	{
+		DrawTextUtf8(SCREEN_WIDTH / 2 - 180, 228, GetColor(200, 200, 255), "無敵・弾消去中…");
+	}
+	if (BOSS_RUSH_MODE)
+		DrawTextUtf8(SCREEN_WIDTH / 2 - 180, 252, GetColor(200, 200, 255), "無敵・弾消去中…");
 }
 
 // --- SetupCamera: 背面追従TPS（見下ろしではなく肩越し視点） ---
@@ -398,9 +891,7 @@ void GameScene::SetupCamera()
 	SetCameraPositionAndTargetAndUpVec(camPos, camTarget, camUp);
 }
 
-// --- DrawField: 床のみのシンプル描画（Tutorial と同等の軽量化版） ---
-// 以前は床に加えてグリッド線(数十本) + 境界線4本 + ライトON/OFF切替を
-// 毎フレーム行っていたが、ゲームシーンの常時負荷の原因のため廃止。
+// --- DrawField: 床＋（リッチ時は）スクロールネオングリッド＋境界線 ---
 void GameScene::DrawField()
 {
 	float halfW = FIELD_WIDTH / 2.0f;
@@ -410,6 +901,11 @@ void GameScene::DrawField()
 	VECTOR floorMax = VGet(halfW, 0.0f, halfD);
 	unsigned int floorCol = GetColor(32, 58, 88);
 	DrawCube3D(floorMin, floorMax, floorCol, floorCol, FALSE);
+
+	if (GameOptionsUseFlashyBackground() && BACKGROUND_FLASHY_FIELD_GRID)
+		DrawFlashyFieldGrid();
+	else if (GameOptionsUseLiteBackground() && BACKGROUND_LITE_FIELD_GRID)
+		DrawLiteFieldGrid();
 }
 
 // --- ExecuteBomb: ボム（スペルカード）発動 ---
@@ -418,12 +914,27 @@ void GameScene::ExecuteBomb()
 	if (m_Player.TriggerBomb())
 	{
 		SoundSynth::PlayBomb();
-		m_Effect.TriggerBombShockwave(m_Player.GetX(), PLAYER_Y, m_Player.GetZ());
+		const float px = m_Player.GetX();
+		const float pz = m_Player.GetZ();
+		m_Effect.TriggerBombShockwave(px, PLAYER_Y, pz);
 		m_Bullets.ClearEnemyBullets();
-		m_Enemies.DamageAllEnemies(18, m_Bullets);
-		AddScreenShake(22, 14.0f);
-		m_Effect.AddExplosion(m_Player.GetX(), PLAYER_Y, m_Player.GetZ(), GetColor(0, 255, 255), EXPLOSION_PARTICLE_COUNT);
+		m_Enemies.DamageAllEnemies(24, m_Bullets);
+		AddScreenShake(22, 12.0f);
+		if (g_Options.hitStopEnabled)
+			m_HitStopTimer = 3;
 	}
+}
+
+void GameScene::DrawScreenFx() const
+{
+	if (m_FeverScreenFlashTimer <= 0)
+		return;
+
+	int alpha = m_FeverScreenFlashTimer * 2;
+	if (alpha > 48) alpha = 48;
+	SetDrawBlendMode(DX_BLENDMODE_ADD, alpha);
+	DrawBox(0, 0, SCREEN_WIDTH, SCREEN_HEIGHT, GetColor(255, 230, 160), TRUE);
+	SetDrawBlendMode(DX_BLENDMODE_NOBLEND, 0);
 }
 
 // --- CheckItemCollisions: 自機 vs アイテム回収 ---
@@ -482,6 +993,22 @@ void GameScene::CheckItemCollisions()
 	}
 }
 
+namespace
+{
+	int GetPlayerBulletDamage(const Bullet& pb)
+	{
+		if (pb.hitDamage > 0)
+			return pb.hitDamage;
+		return (pb.kind == PlayerBulletKind::Charge) ? 8 : 1;
+	}
+
+	bool BulletKeepsAfterHit(const Bullet& pb)
+	{
+		return (pb.kind == PlayerBulletKind::Pierce || pb.kind == PlayerBulletKind::Charge)
+			&& pb.pierceLeft > 0;
+	}
+}
+
 // --- CheckCollisions: 3D球体衝突およびグレイズ判定 ---
 void GameScene::CheckCollisions()
 {
@@ -517,7 +1044,7 @@ void GameScene::CheckCollisions()
 	int hitSparkles = 0;
 	int bossBulletReleases = 0;
 	const float playerQueryRadius = GRAZE_RADIUS + 90.0f;
-	const float bulletEnemyQueryPad = ENEMY_DRAW_SIZE + 85.0f;
+	const float bulletEnemyQueryPad = ENEMY_GRUNT_COLLISION_RADIUS + 85.0f;
 
 	const bool bossActive = m_Enemies.IsBossActive() && !m_Enemies.IsSpellBreakActive();
 	const bool midBossActive = m_Enemies.IsMidBossActive();
@@ -553,12 +1080,12 @@ void GameScene::CheckCollisions()
 				bx, PLAYER_Y, bz, br,
 				bossX, PLAYER_Y, bossZ, bossR))
 			{
-				const bool keep = (pb.kind == PlayerBulletKind::Pierce && pb.pierceLeft > 0);
+				const bool keep = BulletKeepsAfterHit(pb);
 				if (keep) pb.pierceLeft--;
 
 				pb.life = BOSS_BULLET_COLLISION_SKIP;
 
-				if (m_Enemies.TryApplyBossBulletHit(1, m_Bullets))
+				if (m_Enemies.TryApplyBossBulletHit(GetPlayerBulletDamage(pb), m_Bullets))
 				{
 					if (!keep) releasePlayerBulletCapped(i);
 					m_Player.AddScore(30);
@@ -589,12 +1116,12 @@ void GameScene::CheckCollisions()
 				bx, PLAYER_Y, bz, br,
 				midX, PLAYER_Y, midZ, midR))
 			{
-				const bool keep = (pb.kind == PlayerBulletKind::Pierce && pb.pierceLeft > 0);
+				const bool keep = BulletKeepsAfterHit(pb);
 				if (keep) pb.pierceLeft--;
 
 				pb.life = BOSS_BULLET_COLLISION_SKIP;
 
-				if (m_Enemies.TryApplyMidBossBulletHit(1, m_Bullets))
+				if (m_Enemies.TryApplyMidBossBulletHit(GetPlayerBulletDamage(pb), m_Bullets))
 				{
 					if (!keep) releasePlayerBulletCapped(i);
 					m_Player.AddScore(25);
@@ -625,11 +1152,11 @@ void GameScene::CheckCollisions()
 				return;
 
 			hitResolved = true;
-			const bool keep = (pb.kind == PlayerBulletKind::Pierce && pb.pierceLeft > 0);
+			const bool keep = BulletKeepsAfterHit(pb);
 			if (keep) pb.pierceLeft--;
 
 			const EnemyType killedType = pEnemies[j].GetType();
-			if (pEnemies[j].TryApplyBulletDamage(1))
+			if (pEnemies[j].TryApplyBulletDamage(GetPlayerBulletDamage(pb)))
 			{
 				if (!keep) m_Bullets.ReleasePlayerBullet(i);
 
@@ -700,8 +1227,16 @@ void GameScene::CheckCollisions()
 			if (!m_Player.IsInvincible())
 			{
 				m_Bullets.ReleaseEnemyBullet(i);
+				const int livesBefore = m_Player.GetLives();
+				const bool trackLives = !m_Player.IsPracticeMode() && !m_Player.IsScoreAttackMode();
 				m_Player.OnHit();
 				m_WaveNoDamage = false;
+				m_HitStopTimer = HITSTOP_FRAMES;
+				m_LivesLostFxTimer = 75;
+				// 残機1のとき（この被弾でゲームオーバー）: 赤フラッシュのみ、文字演出は出さない
+				const bool fatalHit = !m_Player.IsAlive()
+					|| (trackLives && livesBefore <= 1);
+				m_LivesLostFxShowText = !fatalHit;
 				SoundSynth::PlayExplosion();
 				m_Effect.AddExplosion(px, PLAYER_Y, pz, GetColor(0, 200, 255), EXPLOSION_PARTICLE_COUNT);
 				AddScreenShake(14, 9.0f);
@@ -818,7 +1353,8 @@ void GameScene::DrawHud()
 	DrawTextUtf8(30, 80, GetColor(255, 120, 120), "ＬＩＦＥ ／ 残機");
 	DrawTextUtf8(SCREEN_WIDTH - 220, 18, GetColor(200, 200, 200), "ＢＯＭＢ ／ ボム");
 	DrawTextUtf8(SCREEN_WIDTH - 220, 80, GetColor(255, 200, 0), "ＧＲＡＺＥ ／ かすり");
-	DrawTextUtf8(SCREEN_WIDTH / 2 - 90, 18, GetColor(200, 200, 200), "ＷＡＶＥ ／ 進行段階");
+	DrawTextUtf8(SCREEN_WIDTH / 2 - 90, 18, GetColor(200, 200, 200),
+		BOSS_RUSH_MODE ? "ＰＨＡＳＥ ／ ボス段階" : "ＷＡＶＥ ／ 進行段階");
 
 	// === ライフ表示: 赤い菱形（DrawTriangle で軽量描画） ===
 	int lives = m_Player.GetLives();
@@ -848,24 +1384,37 @@ void GameScene::DrawHud()
 	SetFontSize(26);
 	DrawFormatString(SCREEN_WIDTH - 220, 102, GetColor(255, 220, 0), "%d 回", m_Player.GetGrazeCount());
 
-	// === ウェーブ番号 ===
-	int wave = m_Enemies.GetCurrentWave();
-	SetFontSize(30);
-	DrawFormatString(SCREEN_WIDTH / 2 - 50, 40, GetColor(255, 255, 255), "%d ／ %d", wave, MAX_WAVES);
+	// === ウェーブ／フェーズ番号 ===
+	if (BOSS_RUSH_MODE)
+	{
+		int phase = m_Enemies.GetBossPhase() + 1;
+		if (phase < 1) phase = 1;
+		if (phase > BOSS_RUSH_PHASE_COUNT) phase = BOSS_RUSH_PHASE_COUNT;
+		SetFontSize(30);
+		DrawFormatString(SCREEN_WIDTH / 2 - 70, 40, GetColor(255, 255, 255),
+			"PHASE %d ／ %d", phase, BOSS_RUSH_PHASE_COUNT);
+		SetFontSize(18);
+		DrawTextUtf8(SCREEN_WIDTH / 2 - 120, 80, GetColor(255, 180, 0), "[ BOSS BATTLE ]");
+	}
+	else
+	{
+		int wave = m_Enemies.GetCurrentWave();
+		SetFontSize(30);
+		DrawFormatString(SCREEN_WIDTH / 2 - 50, 40, GetColor(255, 255, 255), "%d ／ %d", wave, MAX_WAVES);
 
-	// === ウェーブ愛称 ===
-	static const char* const waveTitlesJp[] = {
-		"[ 弾幕開幕　紅蓮の雨 ]",
-		"[ スペル　螺旋ノ調 ]",
-		"[ 鬼弾幕　鉄壁陣形 ]",
-		"[ 狂騒曲　弾幕カグラ風 ]",
-		"[ 終章　禁忌の弾幕祭 ]"
-	};
-	int wi = wave - 1;
-	if (wi < 0) wi = 0;
-	if (wi > 4) wi = 4;
-	SetFontSize(18);
-	DrawTextUtf8(SCREEN_WIDTH / 2 - 120, 80, GetColor(255, 180, 0), waveTitlesJp[wi]);
+		static const char* const waveTitlesJp[] = {
+			"[ 弾幕開幕　紅蓮の雨 ]",
+			"[ スペル　螺旋ノ調 ]",
+			"[ 鬼弾幕　鉄壁陣形 ]",
+			"[ 狂騒曲　弾幕カグラ風 ]",
+			"[ 終章　禁忌の弾幕祭 ]"
+		};
+		int wi = wave - 1;
+		if (wi < 0) wi = 0;
+		if (wi > 4) wi = 4;
+		SetFontSize(18);
+		DrawTextUtf8(SCREEN_WIDTH / 2 - 120, 80, GetColor(255, 180, 0), waveTitlesJp[wi]);
+	}
 
 	// === フィーバーゲージ/メーター（下端中央） ===
 	int meterW = 380;
@@ -880,11 +1429,11 @@ void GameScene::DrawHud()
 	{
 		float fRatio = (float)m_Player.GetFeverTimer() / (float)Player::GetFeverDurationMax();
 		int fWidth = (int)(meterW * fRatio);
-		unsigned int fColor = ((m_FrameCount / 5) % 2 == 0) ? GetColor(255, 215, 0) : GetColor(255, 255, 100);
+		unsigned int fColor = GetColor(255, 200, 80);
 		DrawBox(mx, my, mx + fWidth, my + meterH, fColor, TRUE);
 
-		SetFontSize(22);
-		DrawTextUtf8(SCREEN_WIDTH / 2 - 190, my - 28, fColor, "！！  フィーバータイム　超火力弾幕  ！！");
+		SetFontSize(20);
+		DrawTextUtf8(SCREEN_WIDTH / 2 - 160, my - 26, fColor, "フィーバータイム");
 	}
 	else
 	{
@@ -909,12 +1458,15 @@ void GameScene::DrawHud()
 		int by = 118;
 		DrawBox(bx - 2, by - 2, bx + bossBarW + 2, by + 14, GetColor(50, 0, 10), TRUE);
 		DrawBox(bx, by, bx + (int)(bossBarW * bossRatio), by + 10, GetColor(255, 0, 100), TRUE);
+		int chapter = m_Enemies.GetStageChapter();
+		int phase = m_Enemies.GetBossPhase();
+		SetFontSize(16);
+		DrawTextUtf8(bx, by + 14, GetColor(255, 200, 100), GetBossDisplayName(chapter));
 		SetFontSize(18);
-		DrawTextUtf8(bx, by + 14, GetColor(255, 200, 100), "ＢＯＳＳ");
+		DrawTextUtf8(bx, by + 34, GetColor(255, 220, 180), GetSpellCardName(chapter, phase));
 	}
 
 	// === モード/倍率/スペル/チャージ表示 ===
-	// 同サイズが連続するのでまとめて切替
 	bool practice = m_Player.IsPracticeMode();
 	bool scoreAtk = m_Player.IsScoreAttackMode();
 	bool showMul = (g_GameData.scoreMultiplier > 1.01f);
@@ -937,7 +1489,7 @@ void GameScene::DrawHud()
 	{
 		SetFontSize(16);
 		DrawFormatString(SCREEN_WIDTH - 240, 130, GetColor(255, 140, 220),
-			"スペル拾い %d", g_GameData.spellBonusCollected);
+			"スペル拾得 %d", g_GameData.spellBonusCollected);
 	}
 
 	if (charge > 0)
@@ -948,13 +1500,19 @@ void GameScene::DrawHud()
 		DrawBox(SCREEN_WIDTH / 2 - 62, SCREEN_HEIGHT - 58, SCREEN_WIDTH / 2 - 62 + cw, SCREEN_HEIGHT - 46,
 			GetColor(255, 100, 255), TRUE);
 		SetFontSize(14);
-		DrawTextUtf8(SCREEN_WIDTH / 2 - 70, SCREEN_HEIGHT - 78, GetColor(255, 180, 255), "チャージ");
+		DrawTextUtf8(SCREEN_WIDTH / 2 - 120, SCREEN_HEIGHT - 78, GetColor(255, 180, 255),
+			"チャージ（静止 or Shift+射撃）");
 	}
 
 	if (spellBreak)
 	{
+		int chapter = m_Enemies.GetStageChapter();
+		int phase = m_Enemies.GetBossPhase();
+		if (phase > 0) phase--;
 		SetFontSize(22);
-		DrawTextUtf8(SCREEN_WIDTH / 2 - 140, 130, GetColor(255, 255, 200), "スペルカード破壊！");
+		DrawTextUtf8(SCREEN_WIDTH / 2 - 140, 118, GetColor(255, 255, 200), "スペルカード破壊！");
+		SetFontSize(18);
+		DrawTextUtf8(SCREEN_WIDTH / 2 - 200, 148, GetColor(255, 220, 160), GetSpellCardName(chapter, phase));
 	}
 
 #if SHOW_FPS

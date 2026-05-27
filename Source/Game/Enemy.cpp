@@ -1,4 +1,8 @@
 ﻿#include "Game/Enemy.h"
+#include "Game/SilhouetteDraw.h"
+#include "Game/TouhouTheme.h"
+#include "Common/ResourceManager.h"
+#include "GameConfig.h"
 #include "DxLib.h"
 #include <cmath>
 
@@ -9,7 +13,7 @@ void Enemy::Init(EnemyType type, float startX, float startZ, Difficulty diff)
 	m_Y = PLAYER_Y; // ?e??????@??????????????@?????Y???W?????
 	m_Z = startZ;
 	m_Type = type;
-	m_Radius = ENEMY_DRAW_SIZE;
+	m_Radius = GetEnemyCollisionRadius(type);
 	m_Active = true;
 	
 	// ???????????t???[?????????o?????????
@@ -289,8 +293,33 @@ void Enemy::Draw() const
 		break;
 	}
 
-	// 敵本体（無ライトで軽量描画）
-	DrawCube3D(minPos, maxPos, bodyColor, edgeColor, FALSE);
+	if (PreferGameSprites() && ResourceManager::IsReady())
+	{
+		ResourceManager::DrawEnemy(m_Type, m_X, m_Y, m_Z, m_Radius, m_Timer);
+	}
+	else if (UseTouhouTheme() && UseSilhouetteStyle())
+	{
+		SilhouetteDraw::DrawEnemyYoukai(m_Type, m_X, m_Y, m_Z, m_Radius, bodyColor, edgeColor, m_Timer);
+	}
+	else if (UseSilhouetteStyle())
+	{
+		SilhouetteDraw::DrawEnemy(m_Type, m_X, m_Y, m_Z, m_Radius, bodyColor, edgeColor, m_Timer);
+	}
+	else
+	{
+		DrawCube3D(minPos, maxPos, bodyColor, edgeColor, FALSE);
+	}
+
+	// [VISUAL_RICH] 加算ハロー（脈動）— スプライト時は省略
+	if (VISUAL_RICH && !(PreferGameSprites() && ResourceManager::IsReady()))
+	{
+		float pulse = sinf((float)GetNowCount() / 180.0f + m_X * 0.01f) * 1.5f;
+		float haloR = m_Radius * 1.45f + pulse;
+		VECTOR center = VGet(m_X, m_Y, m_Z);
+		SetDrawBlendMode(DX_BLENDMODE_ADD, RICH_ENEMY_GLOW_ALPHA);
+		DrawSphere3D(center, haloR, 6, bodyColor, bodyColor, FALSE);
+		SetDrawBlendMode(DX_BLENDMODE_NOBLEND, 0);
+	}
 
 	VECTOR hpWorldPos = VGet(m_X, m_Y + m_Radius + 6.0f, m_Z);
 	VECTOR hpScreenPos = ConvWorldPosToScreenPos(hpWorldPos);

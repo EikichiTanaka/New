@@ -7,6 +7,7 @@
 #include "Scene/TitleScene.h"
 #include "Scene/DifficultySelectScene.h"
 #include "Scene/GameScene.h"
+#include "Scene/Stage2Scene.h"
 #include "Scene/ResultScene.h"
 #include "Scene/TutorialScene.h"
 #include "Scene/OptionsScene.h"
@@ -85,6 +86,10 @@ void SceneManager::ChangeScene(SceneType nextScene)
 
 	case SceneType::Game:
 		m_pCurrentScene = new GameScene();
+		break;
+
+	case SceneType::Stage2:
+		m_pCurrentScene = new Stage2Scene();
 		break;
 
 	case SceneType::Tutorial:

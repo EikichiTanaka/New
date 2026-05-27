@@ -8,7 +8,8 @@ class EnemyManager
 {
 public:
 	void Init(Difficulty diff);
-	void ConfigureStage(StageStart stage, PlayMode mode, int stageChapter = 0);
+	void ConfigureStage(StageStart stage, PlayMode mode, int stageChapter = 0,
+		int bossRushStartPhase = 0);
 
 	void Update(float playerX, float playerZ, BulletManager& bullets);
 	void Draw() const;
@@ -17,6 +18,7 @@ public:
 	void DamageAllEnemies(int dmg, BulletManager& bullets);
 
 	Enemy* GetEnemies() { return m_Enemies; }
+	const Enemy* GetEnemies() const { return m_Enemies; }
 	int GetEnemyMax() const { return ENEMY_MAX; }
 
 	bool IsBossActive() const { return m_BossActive; }
@@ -27,7 +29,8 @@ public:
 	float GetBossX() const { return m_BossX; }
 	float GetBossY() const { return m_BossY; }
 	float GetBossZ() const { return m_BossZ; }
-	float GetBossRadius() const { return m_BossRadius; }
+	float GetBossRadius() const { return m_BossHitRadius; }
+	float GetBossDrawRadius() const { return m_BossDrawRadius; }
 	int GetBossHp() const { return m_BossHp; }
 	int GetBossMaxHp() const { return m_BossMaxHp; }
 	int GetBossPhase() const { return m_BossPhase; }
@@ -35,7 +38,8 @@ public:
 
 	float GetMidBossX() const { return m_MidBossX; }
 	float GetMidBossZ() const { return m_MidBossZ; }
-	float GetMidBossRadius() const { return m_MidBossRadius; }
+	float GetMidBossRadius() const { return m_MidBossHitRadius; }
+	float GetMidBossDrawRadius() const { return m_MidBossRadius; }
 
 	void TakeBossDamage(int dmg, BulletManager& bullets);
 	bool TryApplyBossBulletHit(int dmg, BulletManager& bullets);
@@ -66,10 +70,12 @@ private:
 
 	bool m_BossActive;
 	float m_BossX, m_BossY, m_BossZ;
-	float m_BossRadius;
+	float m_BossDrawRadius;
+	float m_BossHitRadius;
 	int m_BossHp;
 	int m_BossMaxHp;
 	int m_BossTimer;
+	int m_BossPatternTimer;
 	int m_BossPhase;
 	int m_SpellBreakTimer;
 	int m_BossHitCooldown;
@@ -79,16 +85,19 @@ private:
 	int m_MidBossId;
 	float m_MidBossX, m_MidBossZ;
 	float m_MidBossRadius;
+	float m_MidBossHitRadius;
 	int m_MidBossHp;
 	int m_MidBossMaxHp;
 	int m_MidBossTimer;
 
 	int m_StageChapter;
+	int m_BossRushStartPhase;
 	int m_BossIntroTimer;
 	bool m_BossIntroClearedBullets;
 
 	void SpawnBoss();
 	void SpawnMidBoss(int id);
+	void UpdateBossMovement();
 	void UpdateBoss(float playerX, float playerZ, BulletManager& bullets);
 	void UpdateMidBoss(float playerX, float playerZ, BulletManager& bullets);
 	void UpdateWaveDanmaku(float playerX, float playerZ, BulletManager& bullets);

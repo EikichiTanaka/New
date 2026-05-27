@@ -4,7 +4,8 @@ enum class PlayerBulletKind : char
 {
 	Normal = 0,
 	Pierce,
-	Homing
+	Homing,
+	Charge
 };
 
 struct Bullet
@@ -17,4 +18,5 @@ struct Bullet
 	bool active;
 	PlayerBulletKind kind;
 	int pierceLeft;
+	int hitDamage;
 };

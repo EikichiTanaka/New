@@ -1,5 +1,6 @@
 #include "Common/GameOptions.h"
 #include "Common/GameScreen.h"
+#include "GameConfig.h"
 #include "DxLib.h"
 #include <cstdio>
 #include <algorithm>
@@ -38,10 +39,9 @@ void GameOptionsApplyGraphics()
 {
 	ChangeWindowMode(g_Options.fullscreen ? FALSE : TRUE);
 	SetGraphMode(g_Options.resWidth, g_Options.resHeight, 32);
-	SetDrawScreen(DX_SCREEN_BACK);
 	g_ScreenWidth = g_Options.resWidth;
 	g_ScreenHeight = g_Options.resHeight;
-	GameScreenSyncSize();
+	GameReloadGraphicsResources();
 }
 
 void GameOptionsApplyVolumes()
@@ -57,4 +57,14 @@ int GameOptionsGetSeVolume255()
 int GameOptionsGetBgmVolume255()
 {
 	return (int)(g_Options.bgmVolume * 255.0f);
+}
+
+bool GameOptionsUseFlashyBackground()
+{
+	return BACKGROUND_FLASHY_ENABLED && !g_Options.backgroundLiteMode;
+}
+
+bool GameOptionsUseLiteBackground()
+{
+	return BACKGROUND_FLASHY_ENABLED && g_Options.backgroundLiteMode;
 }

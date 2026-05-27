@@ -12,7 +12,8 @@ enum class SceneType
 	Title,             // タイトル画面
 	Options,           // オプション画面
 	DifficultySelect,  // 難易度選択画面
-	Game,              // ゲーム本編
+	Game,              // ゲーム本編（一面：弾幕ボスラッシュ）
+	Stage2,            // 二面：マウス視点の全方位3Dシューター
 	Tutorial,          // 操作チュートリアル（本編とは別シーン）
 	Result,            // リザルト画面
 	Exit               // ゲーム終了

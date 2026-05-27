@@ -3,6 +3,7 @@ C:\Users\student\Desktop\ｌｌｌ\New\Source\Manager\SceneManager.cpp;C:\Users\
 C:\Users\student\Desktop\ｌｌｌ\New\Source\Scene\TitleScene.cpp;C:\Users\student\Desktop\ｌｌｌ\New\Project1\x64\Debug\TitleScene.obj
 C:\Users\student\Desktop\ｌｌｌ\New\Source\Scene\DifficultySelectScene.cpp;C:\Users\student\Desktop\ｌｌｌ\New\Project1\x64\Debug\DifficultySelectScene.obj
 C:\Users\student\Desktop\ｌｌｌ\New\Source\Scene\GameScene.cpp;C:\Users\student\Desktop\ｌｌｌ\New\Project1\x64\Debug\GameScene.obj
+C:\Users\student\Desktop\ｌｌｌ\New\Source\Scene\Stage2Scene.cpp;C:\Users\student\Desktop\ｌｌｌ\New\Project1\x64\Debug\Stage2Scene.obj
 C:\Users\student\Desktop\ｌｌｌ\New\Source\Scene\TutorialScene.cpp;C:\Users\student\Desktop\ｌｌｌ\New\Project1\x64\Debug\TutorialScene.obj
 C:\Users\student\Desktop\ｌｌｌ\New\Source\Scene\ResultScene.cpp;C:\Users\student\Desktop\ｌｌｌ\New\Project1\x64\Debug\ResultScene.obj
 C:\Users\student\Desktop\ｌｌｌ\New\Source\Scene\OptionsScene.cpp;C:\Users\student\Desktop\ｌｌｌ\New\Project1\x64\Debug\OptionsScene.obj
@@ -14,8 +15,12 @@ C:\Users\student\Desktop\ｌｌｌ\New\Source\Game\Enemy.cpp;C:\Users\student\De
 C:\Users\student\Desktop\ｌｌｌ\New\Source\Game\EnemyManager.cpp;C:\Users\student\Desktop\ｌｌｌ\New\Project1\x64\Debug\EnemyManager.obj
 C:\Users\student\Desktop\ｌｌｌ\New\Source\Game\BulletManager.cpp;C:\Users\student\Desktop\ｌｌｌ\New\Project1\x64\Debug\BulletManager.obj
 C:\Users\student\Desktop\ｌｌｌ\New\Source\Game\Effect.cpp;C:\Users\student\Desktop\ｌｌｌ\New\Project1\x64\Debug\Effect.obj
+C:\Users\student\Desktop\ｌｌｌ\New\Source\Game\SilhouetteDraw.cpp;C:\Users\student\Desktop\ｌｌｌ\New\Project1\x64\Debug\SilhouetteDraw.obj
+C:\Users\student\Desktop\ｌｌｌ\New\Source\Game\CollisionDebug.cpp;C:\Users\student\Desktop\ｌｌｌ\New\Project1\x64\Debug\CollisionDebug.obj
+C:\Users\student\Desktop\ｌｌｌ\New\Source\Game\TouhouTheme.cpp;C:\Users\student\Desktop\ｌｌｌ\New\Project1\x64\Debug\TouhouTheme.obj
 C:\Users\student\Desktop\ｌｌｌ\New\Source\Common\SoundSynth.cpp;C:\Users\student\Desktop\ｌｌｌ\New\Project1\x64\Debug\SoundSynth.obj
 C:\Users\student\Desktop\ｌｌｌ\New\Source\Common\GameData.cpp;C:\Users\student\Desktop\ｌｌｌ\New\Project1\x64\Debug\GameData.obj
 C:\Users\student\Desktop\ｌｌｌ\New\Source\Common\GameSession.cpp;C:\Users\student\Desktop\ｌｌｌ\New\Project1\x64\Debug\GameSession.obj
 C:\Users\student\Desktop\ｌｌｌ\New\Source\Common\SaveData.cpp;C:\Users\student\Desktop\ｌｌｌ\New\Project1\x64\Debug\SaveData.obj
 C:\Users\student\Desktop\ｌｌｌ\New\Source\Common\KeyHelper.cpp;C:\Users\student\Desktop\ｌｌｌ\New\Project1\x64\Debug\KeyHelper.obj
+C:\Users\student\Desktop\ｌｌｌ\New\Source\Common\ResourceManager.cpp;C:\Users\student\Desktop\ｌｌｌ\New\Project1\x64\Debug\ResourceManager.obj

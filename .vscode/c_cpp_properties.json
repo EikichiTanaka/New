@@ -1,0 +1,43 @@
+{
+    "configurations": [
+        {
+            "name": "Project1 Debug x64",
+            "includePath": [
+                "${workspaceFolder}/Source",
+                "${workspaceFolder}/DxLib_VC/?v???W?F?N?g??????????t?@?C??_VC?p",
+                "${default}"
+            ],
+            "defines": [
+                "_DEBUG",
+                "_WIN64",
+                "UNICODE",
+                "_UNICODE"
+            ],
+            "windowsSdkVersion": "10.0.22621.0",
+            "compilerPath": "",
+            "cStandard": "c17",
+            "cppStandard": "c++17",
+            "intelliSenseMode": "windows-msvc-x64"
+        },
+        {
+            "name": "Project1 Release x64",
+            "includePath": [
+                "${workspaceFolder}/Source",
+                "${workspaceFolder}/DxLib_VC/?v???W?F?N?g??????????t?@?C??_VC?p",
+                "${default}"
+            ],
+            "defines": [
+                "NDEBUG",
+                "_WIN64",
+                "UNICODE",
+                "_UNICODE"
+            ],
+            "windowsSdkVersion": "10.0.22621.0",
+            "compilerPath": "",
+            "cStandard": "c17",
+            "cppStandard": "c++17",
+            "intelliSenseMode": "windows-msvc-x64"
+        }
+    ],
+    "version": 4
+}

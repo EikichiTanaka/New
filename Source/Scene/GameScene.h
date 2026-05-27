@@ -16,6 +16,7 @@
 class GameScene : public SceneBase
 {
 public:
+	~GameScene() override;
 	void Init() override;
 	SceneType Update() override;
 	void Draw() override;
@@ -30,6 +31,11 @@ private:
 	void CheckItemCollisions();
 	void DrawHud();
 	void DrawPauseOverlay();
+	void DrawPauseMenu();
+	void DrawQuitConfirmOverlay();
+	void DrawLivesLostOverlay();
+	SceneType UpdatePauseMenu();
+	void ExitToTitle();
 
 	struct GameItem
 	{
@@ -67,13 +73,28 @@ private:
 	float m_ShakeMag;
 
 	bool m_Paused;
+	int  m_PauseMenuCursor;
+	bool m_QuitConfirmActive;
+	int  m_LivesLostFxTimer;
+	bool m_LivesLostFxShowText;
 	int  m_HitStopTimer;
 	int  m_PrevWave;
 	bool m_WaveNoDamage;
 	int  m_PrevSpellBreakTimer;
+	bool m_BombKeyHeld;
+	int  m_FeverScreenFlashTimer;
 
 	void DrawBossIntroOverlay() const;
+	void DrawScreenFx() const;
 	void UpdateBackgroundBgm();
 	void SpawnSpellBreakBonuses();
 	void FinalizeRunStats();
+
+	// 背景（派手 / 軽量はオプション backgroundLiteMode で切替）
+	void DrawFlashySkyBackground() const;
+	void DrawFlashyAmbientBackdrop3D() const;
+	void DrawFlashyFieldGrid() const;
+	void DrawLiteSkyBackground() const;
+	void DrawLiteAmbientBackdrop3D() const;
+	void DrawLiteFieldGrid() const;
 };

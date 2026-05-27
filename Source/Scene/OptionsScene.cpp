@@ -1,4 +1,5 @@
 ﻿#include "Scene/OptionsScene.h"
+#include "Common/GameSession.h"
 #include "Common/GameOptions.h"
 #include "Common/KeyHelper.h"
 #include "Common/GameScreen.h"
@@ -6,7 +7,7 @@
 #include "GameConfig.h"
 #include "DxLib.h"
 
-static const int ROW_COUNT = 6;
+static const int ROW_COUNT = 7;
 
 void OptionsScene::Init()
 {
@@ -24,15 +25,20 @@ SceneType OptionsScene::Update()
 		else
 			GameScreenSyncSize();
 		GameOptionsApplyVolumes();
+		if (g_Session.returnToGameAfterOptions)
+		{
+			g_Session.returnToGameAfterOptions = false;
+			return SceneType::Game;
+		}
 		return SceneType::Title;
 	}
 
-	if (KeyHelper::IsTrigger(KEY_INPUT_UP))
+	if (KeyHelper::IsMenuMoveTrigger(KEY_INPUT_UP))
 	{
 		m_CursorRow--;
 		if (m_CursorRow < 0) m_CursorRow = ROW_COUNT - 1;
 	}
-	if (KeyHelper::IsTrigger(KEY_INPUT_DOWN))
+	if (KeyHelper::IsMenuMoveTrigger(KEY_INPUT_DOWN))
 	{
 		m_CursorRow++;
 		if (m_CursorRow >= ROW_COUNT) m_CursorRow = 0;
@@ -40,9 +46,11 @@ SceneType OptionsScene::Update()
 
 	const float stepVol = 0.05f;
 
-	if (KeyHelper::IsTrigger(KEY_INPUT_LEFT) || KeyHelper::IsTrigger(KEY_INPUT_RIGHT))
+	const bool leftMove = KeyHelper::IsMenuMoveTrigger(KEY_INPUT_LEFT);
+	const bool rightMove = KeyHelper::IsMenuMoveTrigger(KEY_INPUT_RIGHT);
+	if (leftMove || rightMove)
 	{
-		int dir = KeyHelper::IsTrigger(KEY_INPUT_RIGHT) ? 1 : -1;
+		int dir = rightMove ? 1 : -1;
 		switch (m_CursorRow)
 		{
 		case 0:
@@ -73,6 +81,9 @@ SceneType OptionsScene::Update()
 		case 4:
 			g_Options.hitStopEnabled = !g_Options.hitStopEnabled;
 			break;
+		case 5:
+			g_Options.backgroundLiteMode = !g_Options.backgroundLiteMode;
+			break;
 		default:
 			break;
 		}
@@ -98,6 +109,7 @@ void OptionsScene::Draw()
 		"フルスクリーン",
 		"解像度",
 		"ヒットストップ",
+		"背景 軽量モード",
 		"（ESCで保存して戻る）"
 	};
 
@@ -109,7 +121,7 @@ void OptionsScene::Draw()
 	{
 		int rowY = 120 + i * 52;
 		bool sel = (i == m_CursorRow);
-		if (sel && i < 5)
+		if (sel && i < 6)
 		{
 			SetDrawBlendMode(DX_BLENDMODE_ALPHA, 80);
 			DrawBox(cx - 380, rowY - 6, cx + 380, rowY + 36, GetColor(0, 60, 90), TRUE);
@@ -120,7 +132,7 @@ void OptionsScene::Draw()
 		SetFontSize(22);
 		DrawTextUtf8(cx - 320, rowY, GetColor(200, 200, 220), labels[i]);
 
-		if (i >= 5) continue;
+		if (i >= 6) continue;
 
 		SetFontSize(24);
 		unsigned int vc = sel ? GetColor(255, 255, 255) : GetColor(0, 255, 200);
@@ -131,6 +143,7 @@ void OptionsScene::Draw()
 		case 2: sprintf_s(valBuf, "%s", g_Options.fullscreen ? "ON" : "OFF"); break;
 		case 3: sprintf_s(valBuf, "%dx%d", g_Options.resWidth, g_Options.resHeight); break;
 		case 4: sprintf_s(valBuf, "%s", g_Options.hitStopEnabled ? "ON" : "OFF"); break;
+		case 5: sprintf_s(valBuf, "%s", g_Options.backgroundLiteMode ? "ON" : "OFF"); break;
 		default: valBuf[0] = 0; break;
 		}
 		DrawFormatString(cx + 80, rowY, vc, "%s", valBuf);

@@ -1,0 +1,30 @@
+---
+description: Windows shell / terminal usage for this workspace (fullwidth path, sandbox limits)
+globs:
+alwaysApply: true
+---
+
+# Windows terminal (this project)
+
+## Why the agent sandbox often fails here
+
+- The default Cursor **sandbox** on Windows can return **no output** and an **unknown exit status** for shell commands.
+- This workspace path contains **fullwidth characters** (`������`), which sometimes breaks PowerShell-wrapped command lines.
+- Agent commands are often executed via a **PowerShell wrapper**; use `cmd.exe` for batch-style syntax (`&&`, `%VAR%`), not raw PowerShell.
+
+## Required practice for agents
+
+When running **any** terminal command in this repo (build, git, taskkill, MSBuild):
+
+1. Use `required_permissions: ["all"]` on the Shell tool (disable sandbox).
+2. Prefer **cmd** for build/scripts:
+   - `cmd /c "cd /d \"C:\Users\student\Desktop\������\New\" && scripts\build.bat"`
+3. Or run the batch file directly with `all` permissions:
+   - `scripts\build.bat`
+4. Do **not** rely on default sandboxed shell for verification.
+
+## User-side build (always works)
+
+- **Terminal �� Run Build Task** (Ctrl+Shift+B): `Build Project1 (Debug x64)`
+- Or in project root: `scripts\build.bat`
+- If link fails (LNK1104): run `scripts\kill-game.bat` then build again.

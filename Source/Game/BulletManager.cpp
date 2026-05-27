@@ -1,4 +1,8 @@
 ﻿#include "Game/BulletManager.h"
+#include "Game/TouhouTheme.h"
+#include "Common/ResourceManager.h"
+#include "Common/UiDraw.h"
+#include "GameConfig.h"
 #include "Common/GameOptions.h"
 #include "DxLib.h"
 #include <cmath>
@@ -13,7 +17,7 @@ void BulletManager::Init()
 
 void BulletManager::SetupPlayerBullet(Bullet& b, float x, float y, float z,
 	float vx, float vy, float vz, float radius, unsigned int color,
-	PlayerBulletKind kind, int pierce)
+	PlayerBulletKind kind, int pierce, int hitDamage)
 {
 	b.x = x;
 	b.y = y;
@@ -21,11 +25,12 @@ void BulletManager::SetupPlayerBullet(Bullet& b, float x, float y, float z,
 	b.vx = vx;
 	b.vy = vy;
 	b.vz = vz;
-	b.radius = radius;
+	b.radius = PlayerBulletCollisionRadius(radius);
 	b.color = color;
 	b.life = 0;
 	b.kind = kind;
 	b.pierceLeft = pierce;
+	b.hitDamage = hitDamage;
 	b.active = true;
 }
 
@@ -38,21 +43,22 @@ void BulletManager::SetupEnemyBullet(Bullet& b, float x, float y, float z,
 	b.vx = vx;
 	b.vy = vy;
 	b.vz = vz;
-	b.radius = radius;
+	b.radius = EnemyBulletCollisionRadius(radius);
 	b.color = color;
 	b.life = 0;
 	b.kind = PlayerBulletKind::Normal;
 	b.pierceLeft = 0;
+	b.hitDamage = 1;
 	b.active = true;
 }
 
 void BulletManager::AddPlayerBullet(float x, float y, float z, float vx, float vy, float vz,
-	float radius, unsigned int color, PlayerBulletKind kind, int pierce)
+	float radius, unsigned int color, PlayerBulletKind kind, int pierce, int hitDamage)
 {
 	Bullet* b = m_PlayerPool.Acquire();
 	if (b == nullptr)
 		return;
-	SetupPlayerBullet(*b, x, y, z, vx, vy, vz, radius, color, kind, pierce);
+	SetupPlayerBullet(*b, x, y, z, vx, vy, vz, radius, color, kind, pierce, hitDamage);
 }
 
 bool BulletManager::AddEnemyBullet(float x, float y, float z, float vx, float vy, float vz, float radius, unsigned int color)
@@ -144,19 +150,61 @@ void BulletManager::Update(float playerX, float playerZ)
 
 void BulletManager::DrawPlayerBullets3D() const
 {
+	const int count = m_PlayerPool.GetActiveCount();
+
+	if (PreferGameSprites() && ResourceManager::IsReady())
+	{
+		for (int li = 0; li < count; li++)
+		{
+			const Bullet& b = m_PlayerPool.GetSlots()[m_PlayerPool.GetActiveIndex(li)];
+			ResourceManager::DrawPlayerBullet(b.x, b.y, b.z, b.vx, b.vz, b.radius);
+		}
+		return;
+	}
+
 	const int seg = BULLET_DRAW_SEG_PLAYER;
 	const unsigned int edge = GetColor(220, 255, 255);
-	for (int li = 0; li < m_PlayerPool.GetActiveCount(); li++)
+
+	if (UseTouhouTheme())
+	{
+		for (int li = 0; li < count; li++)
+		{
+			const Bullet& b = m_PlayerPool.GetSlots()[m_PlayerPool.GetActiveIndex(li)];
+			TouhouTheme::DrawOfudaBullet(b.x, b.y, b.z, b.vx, b.vz, b.radius, b.color);
+		}
+		return;
+	}
+
+	if (VISUAL_RICH)
+	{
+		SetDrawBlendMode(DX_BLENDMODE_ADD, RICH_PLAYER_HALO_ALPHA);
+		for (int li = 0; li < count; li++)
+		{
+			const Bullet& b = m_PlayerPool.GetSlots()[m_PlayerPool.GetActiveIndex(li)];
+			const float vr = PlayerBulletVisualRadiusFromCollision(b.radius);
+			DrawSphere3D(VGet(b.x, b.y, b.z), vr * 1.4f, seg, b.color, b.color, FALSE);
+		}
+		SetDrawBlendMode(DX_BLENDMODE_NOBLEND, 0);
+		for (int li = 0; li < count; li++)
+		{
+			const Bullet& b = m_PlayerPool.GetSlots()[m_PlayerPool.GetActiveIndex(li)];
+			const float vr = PlayerBulletVisualRadiusFromCollision(b.radius);
+			DrawSphere3D(VGet(b.x, b.y, b.z), vr, seg, b.color, edge, FALSE);
+		}
+		return;
+	}
+
+	for (int li = 0; li < count; li++)
 	{
 		const Bullet& b = m_PlayerPool.GetSlots()[m_PlayerPool.GetActiveIndex(li)];
-		// 最後の TRUE→FALSE: ライト計算を無効化（軽量化）
-		DrawSphere3D(VGet(b.x, b.y, b.z), b.radius, seg, b.color, edge, FALSE);
+		const float vr = PlayerBulletVisualRadiusFromCollision(b.radius);
+		DrawSphere3D(VGet(b.x, b.y, b.z), vr, seg, b.color, edge, FALSE);
 	}
 }
 
 void BulletManager::DrawLit() const
 {
-	// SetMaterialUseVertSpcColor 切替もライト無効化により不要になったため廃止
+	BeginBulletDraw3D();
 	DrawPlayerBullets3D();
 }
 
@@ -165,12 +213,65 @@ void BulletManager::DrawEnemyBullets3DUnlit() const
 	const int seg = BULLET_DRAW_SEG_ENEMY;
 	const int alpha = (int)(g_Options.bulletAlpha * 255.0f);
 	const bool useAlpha = (alpha < 254);
-	if (useAlpha)
-		SetDrawBlendMode(DX_BLENDMODE_ALPHA, alpha);
 
 	const float cullX = BULLET_DRAW_CULL_DIST_X;
 	const float cullZ = BULLET_DRAW_CULL_DIST_Z;
 	const int count = m_EnemyPool.GetActiveCount();
+
+	if (PreferGameSprites() && ResourceManager::IsReady())
+	{
+		for (int li = 0; li < count; li++)
+		{
+			const Bullet& b = m_EnemyPool.GetSlots()[m_EnemyPool.GetActiveIndex(li)];
+			const float dx = b.x - m_RefPlayerX;
+			const float dz = b.z - m_RefPlayerZ;
+			if (fabsf(dx) > cullX || fabsf(dz) > cullZ) continue;
+			ResourceManager::DrawEnemyBullet(b.x, b.y, b.z, b.radius);
+		}
+		return;
+	}
+
+	if (UseTouhouTheme())
+	{
+		for (int li = 0; li < count; li++)
+		{
+			const Bullet& b = m_EnemyPool.GetSlots()[m_EnemyPool.GetActiveIndex(li)];
+			const float dx = b.x - m_RefPlayerX;
+			const float dz = b.z - m_RefPlayerZ;
+			if (fabsf(dx) > cullX || fabsf(dz) > cullZ) continue;
+			TouhouTheme::DrawStarBullet(b.x, b.y, b.z, b.radius, b.color);
+		}
+		return;
+	}
+
+	if (VISUAL_RICH)
+	{
+		SetDrawBlendMode(DX_BLENDMODE_ADD, RICH_BULLET_GLOW_ALPHA);
+		for (int li = 0; li < count; li++)
+		{
+			const Bullet& b = m_EnemyPool.GetSlots()[m_EnemyPool.GetActiveIndex(li)];
+			const float dx = b.x - m_RefPlayerX;
+			const float dz = b.z - m_RefPlayerZ;
+			if (fabsf(dx) > cullX || fabsf(dz) > cullZ) continue;
+			const float vr = EnemyBulletVisualRadiusFromCollision(b.radius);
+			DrawSphere3D(VGet(b.x, b.y, b.z), vr * 1.8f, seg, b.color, b.color, FALSE);
+		}
+		SetDrawBlendMode(DX_BLENDMODE_NOBLEND, 0);
+		const unsigned int core = GetColor(255, 255, 255);
+		for (int li = 0; li < count; li++)
+		{
+			const Bullet& b = m_EnemyPool.GetSlots()[m_EnemyPool.GetActiveIndex(li)];
+			const float dx = b.x - m_RefPlayerX;
+			const float dz = b.z - m_RefPlayerZ;
+			if (fabsf(dx) > cullX || fabsf(dz) > cullZ) continue;
+			const float vr = EnemyBulletVisualRadiusFromCollision(b.radius);
+			DrawSphere3D(VGet(b.x, b.y, b.z), vr, seg, b.color, core, FALSE);
+		}
+		return;
+	}
+
+	if (useAlpha)
+		SetDrawBlendMode(DX_BLENDMODE_ALPHA, alpha);
 
 	for (int li = 0; li < count; li++)
 	{
@@ -180,7 +281,8 @@ void BulletManager::DrawEnemyBullets3DUnlit() const
 		if (fabsf(dx) > cullX || fabsf(dz) > cullZ)
 			continue;
 
-		DrawSphere3D(VGet(b.x, b.y, b.z), b.radius, seg, b.color, b.color, FALSE);
+		const float vr = EnemyBulletVisualRadiusFromCollision(b.radius);
+		DrawSphere3D(VGet(b.x, b.y, b.z), vr, seg, b.color, b.color, FALSE);
 	}
 
 	if (useAlpha)
@@ -189,5 +291,6 @@ void BulletManager::DrawEnemyBullets3DUnlit() const
 
 void BulletManager::DrawEnemiesUnlit() const
 {
+	BeginBulletDraw3D();
 	DrawEnemyBullets3DUnlit();
 }

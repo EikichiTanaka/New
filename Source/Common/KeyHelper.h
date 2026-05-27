@@ -11,6 +11,8 @@ public:
 	static void SyncCurrentKeys();
 
 	static bool IsTrigger(int dxKey);
+	static bool IsRepeat(int dxKey, int firstDelayFrames = 14, int intervalFrames = 4);
+	static bool IsMenuMoveTrigger(int dxKey);
 
 	// ボール発射・決定用（Enter / テンキーEnter / Space）
 	static bool IsLaunchTrigger();

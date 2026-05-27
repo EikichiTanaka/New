@@ -8,7 +8,17 @@ void Effect::Init()
 	m_BombActive = false;
 	m_BombRadius = 0.0f;
 	m_BombTimer = 0;
+	m_BombFlashTimer = 0;
 	m_BombX = m_BombY = m_BombZ = 0.0f;
+	for (int i = 0; i < BOMB_RING_MAX; i++)
+	{
+		m_BombRingRadius[i] = 0.0f;
+		m_BombRingTimer[i] = -1;
+	}
+
+	m_FeverActive = false;
+	m_FeverBurstTimer = 0;
+	m_FeverBurstX = m_FeverBurstY = m_FeverBurstZ = 0.0f;
 
 	m_ParticlePool.Init();
 
@@ -59,12 +69,28 @@ void Effect::Update()
 	{
 		m_BombTimer++;
 		m_BombRadius += 18.0f;
-		if (m_BombTimer >= 48)
+		if (m_BombTimer >= 50)
 		{
 			m_BombActive = false;
 			m_BombRadius = 0.0f;
 		}
 	}
+
+	if (m_BombFlashTimer > 0)
+		m_BombFlashTimer--;
+
+	for (int i = 0; i < BOMB_RING_MAX; i++)
+	{
+		if (m_BombRingTimer[i] < 0)
+			continue;
+		m_BombRingTimer[i]++;
+		m_BombRingRadius[i] += 16.0f + (float)i * 4.0f;
+		if (m_BombRingTimer[i] >= 50)
+			m_BombRingTimer[i] = -1;
+	}
+
+	if (m_FeverBurstTimer > 0)
+		m_FeverBurstTimer--;
 }
 
 void Effect::Draw() const
@@ -76,11 +102,33 @@ void Effect::Draw() const
 
 	if (m_BombActive)
 	{
-		int alpha = 200 - (m_BombTimer * 4);
+		int alpha = 170 - (m_BombTimer * 3);
 		if (alpha < 0) alpha = 0;
 		SetDrawBlendMode(DX_BLENDMODE_ADD, alpha);
 		VECTOR center = VGet(m_BombX, m_BombY, m_BombZ);
-		DrawSphere3D(center, m_BombRadius, 8, GetColor(0, 255, 255), GetColor(0, 255, 255), FALSE);
+		DrawSphere3D(center, m_BombRadius, 10, GetColor(0, 255, 255), GetColor(200, 255, 255), FALSE);
+	}
+
+	for (int i = 0; i < BOMB_RING_MAX; i++)
+	{
+		if (m_BombRingTimer[i] < 0)
+			continue;
+		int alpha = 180 - m_BombRingTimer[i] * 3;
+		if (alpha < 0) alpha = 0;
+		SetDrawBlendMode(DX_BLENDMODE_ADD, alpha);
+		VECTOR center = VGet(m_BombX, m_BombY, m_BombZ);
+		DrawSphere3D(center, m_BombRingRadius[i], 8, GetColor(0, 200, 255), GetColor(255, 255, 255), FALSE);
+	}
+
+	if (m_FeverBurstTimer > 0)
+	{
+		float t = (float)m_FeverBurstTimer / 24.0f;
+		if (t > 1.0f) t = 1.0f;
+		int alpha = (int)(70.0f * t);
+		SetDrawBlendMode(DX_BLENDMODE_ADD, alpha);
+		float burstR = 22.0f + (24 - m_FeverBurstTimer) * 3.0f;
+		VECTOR center = VGet(m_FeverBurstX, m_FeverBurstY, m_FeverBurstZ);
+		DrawSphere3D(center, burstR, 8, GetColor(255, 200, 80), GetColor(255, 230, 160), FALSE);
 	}
 
 	int lastAlpha = -1;
@@ -104,6 +152,47 @@ void Effect::Draw() const
 		if (r < 2) r = 2;
 		DrawCircle((int)sp.x, (int)sp.y, r, p.color, TRUE);
 		particlesDrawn++;
+	}
+
+	SetDrawBlendMode(DX_BLENDMODE_NOBLEND, 0);
+}
+
+void Effect::DrawScreenOverlay() const
+{
+	GameScreenSyncSize();
+	const int sw = SCREEN_WIDTH;
+	const int sh = SCREEN_HEIGHT;
+
+	if (m_BombFlashTimer > 0)
+	{
+		int alpha = m_BombFlashTimer * 6;
+		if (alpha > 130) alpha = 130;
+		SetDrawBlendMode(DX_BLENDMODE_ADD, alpha);
+		DrawBox(0, 0, sw, sh, GetColor(160, 240, 255), TRUE);
+		SetDrawBlendMode(DX_BLENDMODE_ADD, alpha / 2);
+		DrawCircleAA(sw / 2.0f, sh / 2.0f, (float)(sw + sh) * 0.28f, 40,
+			GetColor(255, 255, 255), TRUE);
+	}
+
+	if (m_FeverBurstTimer > 0)
+	{
+		int alpha = m_FeverBurstTimer * 2;
+		if (alpha > 36) alpha = 36;
+		SetDrawBlendMode(DX_BLENDMODE_ADD, alpha);
+		DrawBox(0, 0, sw, sh, GetColor(255, 220, 140), TRUE);
+	}
+
+	if (m_FeverActive)
+	{
+		const float pulse = 0.5f + 0.5f * sinf((float)GetNowCount() / 90.0f);
+		int borderAlpha = (int)(18 + pulse * 22);
+		SetDrawBlendMode(DX_BLENDMODE_ADD, borderAlpha);
+		const int thick = 4;
+		unsigned int borderCol = GetColor(255, 190, 70);
+		DrawBox(0, 0, sw, thick, borderCol, TRUE);
+		DrawBox(0, sh - thick, sw, sh, borderCol, TRUE);
+		DrawBox(0, 0, thick, sh, borderCol, TRUE);
+		DrawBox(sw - thick, 0, sw, sh, borderCol, TRUE);
 	}
 
 	SetDrawBlendMode(DX_BLENDMODE_NOBLEND, 0);
@@ -199,4 +288,23 @@ void Effect::TriggerBombShockwave(float x, float y, float z)
 	m_BombX = x;
 	m_BombY = y;
 	m_BombZ = z;
+	m_BombFlashTimer = 16;
+
+	for (int i = 0; i < BOMB_RING_MAX; i++)
+	{
+		m_BombRingRadius[i] = 8.0f + (float)i * 10.0f;
+		m_BombRingTimer[i] = i * 5;
+	}
+
+	AddExplosion(x, y, z, GetColor(0, 255, 255), EXPLOSION_PARTICLE_COUNT + 12);
+	AddExplosion(x, y, z, GetColor(255, 255, 255), 10);
+}
+
+void Effect::TriggerFeverBurst(float x, float y, float z)
+{
+	m_FeverBurstTimer = 24;
+	m_FeverBurstX = x;
+	m_FeverBurstY = y;
+	m_FeverBurstZ = z;
+	AddExplosion(x, y, z, GetColor(255, 200, 80), EXPLOSION_PARTICLE_COUNT / 2 + 4);
 }

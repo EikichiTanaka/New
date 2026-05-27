@@ -1,4 +1,6 @@
 ﻿#include "Game/EnemyManager.h"
+#include "Game/SilhouetteDraw.h"
+#include "Common/ResourceManager.h"
 #include "DxLib.h"
 #include <cmath>
 
@@ -17,20 +19,24 @@ void EnemyManager::Init(Difficulty diff)
 	m_BossX = 0.0f;
 	m_BossY = PLAYER_Y;
 	m_BossZ = 400.0f;
-	m_BossRadius = 40.0f;
+	m_BossDrawRadius = BOSS_DRAW_RADIUS_REF;
+	m_BossHitRadius = GetBossCollisionRadius(0);
 	m_BossHp = 0;
 	m_BossMaxHp = 0;
 	m_BossTimer = 0;
+	m_BossPatternTimer = 0;
 	m_BossPhase = 0;
 	m_WaveDanmakuTimer = 0;
 	m_SpellBreakTimer = 0;
 	m_BossHitCooldown = 0;
 	m_MidBossHitCooldown = 0;
 	m_StageChapter = 0;
+	m_BossRushStartPhase = 0;
 	m_BossIntroTimer = 0;
 	m_BossIntroClearedBullets = false;
 	m_MidBossActive = false;
 	m_MidBossId = 0;
+	m_MidBossHitRadius = MIDBOSS_COLLISION_RADIUS;
 	m_MidBossHp = 0;
 	m_EnableMidBoss1 = true;
 	m_EnableMidBoss2 = true;
@@ -42,12 +48,28 @@ void EnemyManager::Init(Difficulty diff)
 	}
 }
 
-void EnemyManager::ConfigureStage(StageStart stage, PlayMode mode, int stageChapter)
+void EnemyManager::ConfigureStage(StageStart stage, PlayMode mode, int stageChapter,
+	int bossRushStartPhase)
 {
 	m_PlayMode = mode;
 	m_StageChapter = stageChapter;
 	if (m_StageChapter < 0) m_StageChapter = 0;
 	if (m_StageChapter >= STAGE_CHAPTER_COUNT) m_StageChapter = STAGE_CHAPTER_COUNT - 1;
+	m_BossRushStartPhase = ClampBossRushStartPhase(bossRushStartPhase);
+
+	// [BOSS_RUSH_MODE] 面・ウェーブなし。選択形態から即ボス戦
+	if (BOSS_RUSH_MODE)
+	{
+		m_StageChapter = 0;
+		m_EnableMidBoss1 = false;
+		m_EnableMidBoss2 = false;
+		m_WaveIndex = 4;
+		m_WaveTimer = 0;
+		m_WaveDanmakuTimer = 0;
+		SpawnBoss();
+		return;
+	}
+
 	m_EnableMidBoss1 = (stage == StageStart::All || stage == StageStart::Wave1 || stage == StageStart::Wave2);
 	m_EnableMidBoss2 = (stage == StageStart::All);
 
@@ -177,17 +199,27 @@ void EnemyManager::TakeBossDamage(int dmg, BulletManager& bullets)
 	{
 		m_BossHp = 0;
 		m_BossPhase++;
-		if (m_BossPhase >= 3)
+		const int phaseMax = BOSS_RUSH_MODE ? BOSS_RUSH_PHASE_COUNT : 3;
+		if (m_BossPhase >= phaseMax)
 		{
 			m_BossActive = false;
 			m_AllWavesComplete = true;
 		}
 		else
 		{
-			m_SpellBreakTimer = SPELL_BREAK_FRAMES;
-			m_BossTimer = 0;
+			m_SpellBreakTimer = BOSS_RUSH_MODE
+				? GetBossRushSpellBreakFrames(m_Difficulty)
+				: SPELL_BREAK_FRAMES;
+			m_BossPatternTimer = 0;
 			bullets.ClearEnemyBullets();
-			if (m_BossPhase == 1)
+			if (BOSS_RUSH_MODE)
+			{
+				m_BossHp = GetBossRushPhaseHp(m_Difficulty, m_BossPhase,
+					m_PlayMode == PlayMode::Practice);
+				m_BossMaxHp = m_BossHp;
+				m_BossHitRadius = GetBossCollisionRadius(m_BossPhase);
+			}
+			else if (m_BossPhase == 1)
 			{
 				m_BossHp = 130;
 				m_BossMaxHp = 130;
@@ -207,7 +239,8 @@ void EnemyManager::SpawnMidBoss(int id)
 	m_MidBossId = id;
 	m_MidBossX = 0.0f;
 	m_MidBossZ = 380.0f;
-	m_MidBossRadius = 28.0f;
+	m_MidBossRadius = MIDBOSS_DRAW_RADIUS_REF;
+	m_MidBossHitRadius = MIDBOSS_COLLISION_RADIUS;
 	m_MidBossTimer = 0;
 	if (id == 1)
 	{
@@ -285,20 +318,31 @@ void EnemyManager::OnWaveSectionClear()
 	m_SpawnCount = 0;
 }
 
-// --- SpawnBoss: 最終ウェーブでのボス出現 ---
+// --- SpawnBoss: ボス出現（BOSS_RUSH_MODE では開幕） ---
 void EnemyManager::SpawnBoss()
 {
 	m_BossActive = true;
 	m_BossX = 0.0f;
 	m_BossY = PLAYER_Y;
 	m_BossZ = 400.0f;
-	m_BossRadius = 38.0f;
+	m_BossDrawRadius = BOSS_DRAW_RADIUS_REF;
 
-	m_BossHp = (m_StageChapter >= 1) ? 110 : 90;
+	const int startPhase = BOSS_RUSH_MODE ? m_BossRushStartPhase : 0;
+	m_BossHitRadius = GetBossCollisionRadius(startPhase);
+
+	if (BOSS_RUSH_MODE)
+		m_BossHp = GetBossRushPhaseHp(m_Difficulty, startPhase, m_PlayMode == PlayMode::Practice);
+	else
+	{
+		m_BossHp = (m_StageChapter >= 1) ? 110 : 90;
+		m_BossHitRadius = 38.0f;
+	}
+
 	m_BossMaxHp = m_BossHp;
-	m_BossPhase = 0;
+	m_BossPhase = startPhase;
 	m_BossTimer = 0;
-	m_BossIntroTimer = BOSS_INTRO_FRAMES;
+	m_BossPatternTimer = 0;
+	m_BossIntroTimer = (BOSS_RUSH_MODE && startPhase > 0) ? 60 : BOSS_INTRO_FRAMES;
 	m_BossIntroClearedBullets = false;
 }
 
@@ -420,47 +464,81 @@ void EnemyManager::UpdateWaveDanmaku(float playerX, float playerZ, BulletManager
 	}
 }
 
-// --- UpdateBoss: ボスの行動とスペルカード攻撃パターン ---
+// --- UpdateBossMovement: ボス位置（形態切替・スペル破壊中も継続） ---
+void EnemyManager::UpdateBossMovement()
+{
+	if (!m_BossActive || m_BossIntroTimer > 0)
+		return;
+
+	m_BossTimer++;
+	m_BossX = sinf((float)m_BossTimer / 45.0f) * 160.0f;
+	m_BossZ = 350.0f + cosf((float)m_BossTimer / 60.0f) * 35.0f;
+}
+
+// --- UpdateBoss: スペルカード攻撃パターン ---
 void EnemyManager::UpdateBoss(float playerX, float playerZ, BulletManager& bullets)
 {
 	if (!m_BossActive || m_BossIntroTimer > 0) return;
 
-	m_BossTimer++;
+	m_BossPatternTimer++;
 
-	// ボスの左右緩やかな飛行移動（の字移動）
-	m_BossX = sinf((float)m_BossTimer / 45.0f) * 160.0f;
-	m_BossZ = 350.0f + cosf((float)m_BossTimer / 60.0f) * 35.0f;
+	const bool rush = BOSS_RUSH_MODE;
+	const BossRushDifficultyTune& tune = GetBossRushTune(m_Difficulty);
 
-	// 難易度による発射ペースの補正
 	int fireIntervalScale = 1;
-	if (m_Difficulty == Difficulty::Easy)   fireIntervalScale = 2;
-	if (m_Difficulty == Difficulty::Hard)   fireIntervalScale = 0;
+	if (!rush)
+	{
+		if (m_Difficulty == Difficulty::Easy)   fireIntervalScale = 2;
+		if (m_Difficulty == Difficulty::Hard)   fireIntervalScale = 0;
+	}
 
-	float m_BulletSpeed = EBULLET_SPEED_NORMAL;
-	if (m_Difficulty == Difficulty::Easy) m_BulletSpeed = EBULLET_SPEED_EASY;
-	if (m_Difficulty == Difficulty::Hard) m_BulletSpeed = EBULLET_SPEED_HARD;
+	float bulletSpd = GetBulletSpeed();
+	float bulletRad = EBULLET_RADIUS;
+	if (rush)
+	{
+		bulletSpd *= tune.bulletSpeedMul;
+		bulletRad *= tune.bulletRadiusMul;
+	}
+	else
+	{
+		bulletRad *= DifficultyBulletRadiusMul(m_Difficulty);
+	}
+
+	auto bossInterval = [&](int rushBase, int legacyBase, int legacyMul) -> int
+	{
+		if (rush)
+			return BossRushScaleFireInterval(rushBase, m_Difficulty);
+		return legacyBase + fireIntervalScale * legacyMul;
+	};
+
+	auto bossCount = [&](int rushBase, int legacyBase) -> int
+	{
+		if (rush)
+			return BossRushScaleBulletCount(rushBase, m_Difficulty);
+		if (m_Difficulty == Difficulty::Easy)  return (int)((float)legacyBase * 0.82f);
+		if (m_Difficulty == Difficulty::Hard)  return (int)((float)legacyBase * 1.15f);
+		if (m_Difficulty == Difficulty::Lunatic) return (int)((float)legacyBase * 1.22f);
+		return legacyBase;
+	};
 
 	// --- 段階別攻撃パターン（スペルカード） ---
 	if (m_BossPhase == 0)
 	{
-		int interval = 22 + fireIntervalScale * 6;
-		if (m_BossTimer % interval == 0)
+		const int interval = bossInterval(16, 22, 6);
+		if (m_BossPatternTimer % interval == 0)
 		{
-			int count = 24;
-			if (m_Difficulty == Difficulty::Easy) count = 16;
-			if (m_Difficulty == Difficulty::Hard) count = 30;
-
-			float offsetAngle = (m_BossTimer * 0.055f);
+			const int count = bossCount(30, 24);
+			const float offsetAngle = (m_BossPatternTimer * 0.055f);
 			for (int i = 0; i < count; i++)
 			{
-				float angle = (i * 2.0f * 3.14159265f) / count + offsetAngle;
-				float vx = cosf(angle) * m_BulletSpeed * 0.9f;
-				float vz = sinf(angle) * m_BulletSpeed * 0.9f;
-				bullets.AddEnemyBullet(m_BossX, m_BossY, m_BossZ, vx, 0.0f, vz,
-					EBULLET_RADIUS * 1.05f, GetColor(255, 50, 150));
+				const float angle = (i * 2.0f * 3.14159265f) / count + offsetAngle;
+				bullets.AddEnemyBullet(m_BossX, m_BossY, m_BossZ,
+					cosf(angle) * bulletSpd * 0.9f, 0.0f, sinf(angle) * bulletSpd * 0.9f,
+					bulletRad * 1.05f, GetColor(255, 50, 150));
 			}
 		}
-		if (m_BossTimer % 14 == 0)
+		const int aimedInterval = rush ? bossInterval(10, 14, 0) : 14;
+		if (m_BossPatternTimer % aimedInterval == 0)
 		{
 			float dx = playerX - m_BossX;
 			float dz = playerZ - m_BossZ;
@@ -469,74 +547,83 @@ void EnemyManager::UpdateBoss(float playerX, float playerZ, BulletManager& bulle
 			{
 				float ndx = dx / dist;
 				float ndz = dz / dist;
-				for (int n = -1; n <= 1; n++)
+				int spread = 1;
+				if (rush)
+				{
+					if (m_Difficulty == Difficulty::Lunatic) spread = 3;
+					else if (m_Difficulty == Difficulty::Hard) spread = 2;
+					else spread = 2;
+					if (m_Difficulty == Difficulty::Easy) spread = 1;
+				}
+				for (int n = -spread; n <= spread; n++)
 				{
 					float off = (float)n * 0.15f;
 					bullets.AddEnemyBullet(m_BossX, m_BossY, m_BossZ,
-						(ndx * cosf(off) - ndz * sinf(off)) * m_BulletSpeed * 1.2f, 0.0f,
-						(ndx * sinf(off) + ndz * cosf(off)) * m_BulletSpeed * 1.2f,
-						EBULLET_RADIUS, GetColor(255, 120, 200));
+						(ndx * cosf(off) - ndz * sinf(off)) * bulletSpd * 1.2f, 0.0f,
+						(ndx * sinf(off) + ndz * cosf(off)) * bulletSpd * 1.2f,
+						bulletRad, GetColor(255, 120, 200));
 				}
 			}
 		}
 	}
 	else if (m_BossPhase == 1)
 	{
-		if (m_BossTimer % (2 + fireIntervalScale) == 0)
+		const int spiralInt = rush ? bossInterval(2, 2, 0) : (2 + fireIntervalScale);
+		if (m_BossPatternTimer % spiralInt == 0)
 		{
-			float angle1 = (float)m_BossTimer * 0.13f;
-			float angle2 = angle1 + 3.14159265f;
-			for (int k = 0; k < 2; k++)
+			float angle1 = (float)m_BossPatternTimer * 0.13f;
+			const int arms = rush ? bossCount(3, 2) : 2;
+			for (int k = 0; k < arms; k++)
 			{
-				float a = (k == 0) ? angle1 : angle2;
+				float a = angle1 + (float)k * (3.14159265f * 2.0f / arms);
 				bullets.AddEnemyBullet(m_BossX, m_BossY, m_BossZ,
-					cosf(a) * m_BulletSpeed, 0.0f, sinf(a) * m_BulletSpeed,
-					EBULLET_RADIUS * 0.95f, GetColor(255, 200, 50));
+					cosf(a) * bulletSpd, 0.0f, sinf(a) * bulletSpd,
+					bulletRad * 0.95f, GetColor(255, 200, 50));
 				bullets.AddEnemyBullet(m_BossX, m_BossY, m_BossZ,
-					cosf(a + 0.4f) * m_BulletSpeed * 0.85f, 0.0f, sinf(a + 0.4f) * m_BulletSpeed * 0.85f,
-					EBULLET_RADIUS * 0.85f, GetColor(255, 255, 120));
+					cosf(a + 0.4f) * bulletSpd * 0.85f, 0.0f, sinf(a + 0.4f) * bulletSpd * 0.85f,
+					bulletRad * 0.85f, GetColor(255, 255, 120));
 			}
 		}
 
-		if (m_BossTimer % (28 + fireIntervalScale * 8) == 0)
+		const int radialInt = bossInterval(20, 28, 8);
+		if (m_BossPatternTimer % radialInt == 0)
 		{
-			int count = 24;
-			float spin = (float)m_BossTimer * 0.03f;
+			const int count = bossCount(32, 24);
+			float spin = (float)m_BossPatternTimer * 0.03f;
 			for (int i = 0; i < count; i++)
 			{
 				float angle = (i * 2.0f * 3.14159265f) / count + spin;
 				bullets.AddEnemyBullet(m_BossX, m_BossY, m_BossZ,
-					cosf(angle) * m_BulletSpeed * 0.8f, 0.0f, sinf(angle) * m_BulletSpeed * 0.8f,
-					EBULLET_RADIUS * 1.1f, GetColor(255, 80, 255));
+					cosf(angle) * bulletSpd * 0.8f, 0.0f, sinf(angle) * bulletSpd * 0.8f,
+					bulletRad * 1.1f, GetColor(255, 80, 255));
 			}
 		}
 	}
 	else if (m_BossPhase == 2)
 	{
-		if (m_BossTimer % 4 == 0)
+		const int rainInterval = rush ? bossInterval(3, 4, 0) : 4;
+		if (m_BossPatternTimer % rainInterval == 0)
 		{
 			float rx = (float)(GetRand(800) - 400);
 			bullets.AddEnemyBullet(rx, m_BossY, FIELD_HALF_D + 50.0f,
-				0.0f, 0.0f, -m_BulletSpeed * 1.1f, EBULLET_RADIUS * 0.85f, GetColor(0, 255, 255));
+				0.0f, 0.0f, -bulletSpd * 1.1f, bulletRad * 0.85f, GetColor(0, 255, 255));
 		}
 
-		int radialInterval = 18 + fireIntervalScale * 6;
-		if (m_BossTimer % radialInterval == 0)
+		const int radialInterval = bossInterval(14, 18, 6);
+		if (m_BossPatternTimer % radialInterval == 0)
 		{
-			int count = 32;
-			if (m_Difficulty == Difficulty::Easy) count = 22;
-			if (m_Difficulty == Difficulty::Hard) count = 40;
-
+			const int count = bossCount(36, 32);
 			for (int i = 0; i < count; i++)
 			{
-				float angle = (i * 2.0f * 3.14159265f) / count + ((float)m_BossTimer * 0.04f);
+				float angle = (i * 2.0f * 3.14159265f) / count + ((float)m_BossPatternTimer * 0.04f);
 				bullets.AddEnemyBullet(m_BossX, m_BossY, m_BossZ,
-					cosf(angle) * m_BulletSpeed * 0.78f, 0.0f, sinf(angle) * m_BulletSpeed * 0.78f,
-					EBULLET_RADIUS * 1.15f, GetColor(255, 0, 255));
+					cosf(angle) * bulletSpd * 0.78f, 0.0f, sinf(angle) * bulletSpd * 0.78f,
+					bulletRad * 1.15f, GetColor(255, 0, 255));
 			}
 		}
 
-		if (m_BossTimer % 10 == 0)
+		const int aimedInterval = rush ? bossInterval(8, 10, 0) : 10;
+		if (m_BossPatternTimer % aimedInterval == 0)
 		{
 			float dx = playerX - m_BossX;
 			float dz = playerZ - m_BossZ;
@@ -545,15 +632,75 @@ void EnemyManager::UpdateBoss(float playerX, float playerZ, BulletManager& bulle
 			{
 				float ndx = dx / dist;
 				float ndz = dz / dist;
-				for (int n = -3; n <= 3; n++)
+				int spread = rush ? bossCount(4, 3) : 3;
+				for (int n = -spread; n <= spread; n++)
 				{
 					float off = (float)n * 0.1f;
 					bullets.AddEnemyBullet(m_BossX, m_BossY, m_BossZ,
-						(ndx * cosf(off) - ndz * sinf(off)) * m_BulletSpeed * 1.25f, 0.0f,
-						(ndx * sinf(off) + ndz * cosf(off)) * m_BulletSpeed * 1.25f,
-						EBULLET_RADIUS * 1.2f, GetColor(255, 40, 80));
+						(ndx * cosf(off) - ndz * sinf(off)) * bulletSpd * 1.25f, 0.0f,
+						(ndx * sinf(off) + ndz * cosf(off)) * bulletSpd * 1.25f,
+						bulletRad * 1.2f, GetColor(255, 40, 80));
 				}
 			}
+		}
+	}
+	else // m_BossPhase >= 3 : 第4形態（ボスラッシュ専用）
+	{
+		const int spiralInt = rush ? bossInterval(3, 3, 0) : 3;
+		if (m_BossPatternTimer % spiralInt == 0)
+		{
+			float a1 = (float)m_BossPatternTimer * 0.18f;
+			const int arms = rush ? bossCount(4, 4) : 4;
+			for (int k = 0; k < arms; k++)
+			{
+				float a = a1 + (float)k * 1.5708f;
+				bullets.AddEnemyBullet(m_BossX, m_BossY, m_BossZ,
+					cosf(a) * bulletSpd * 1.05f, 0.0f, sinf(a) * bulletSpd * 1.05f,
+					bulletRad * 1.05f, GetColor(255, 80, 80));
+			}
+		}
+
+		const int radialInt = rush ? bossInterval(12, 12, 0) : 12;
+		if (m_BossPatternTimer % radialInt == 0)
+		{
+			const int count = bossCount(28, 28);
+			for (int i = 0; i < count; i++)
+			{
+				float angle = (i * 2.0f * 3.14159265f) / count + ((float)m_BossPatternTimer * 0.07f);
+				bullets.AddEnemyBullet(m_BossX, m_BossY, m_BossZ,
+					cosf(angle) * bulletSpd * 0.82f, 0.0f, sinf(angle) * bulletSpd * 0.82f,
+					bulletRad * 1.1f, GetColor(255, 60, 200));
+			}
+		}
+
+		const int aimedInt = rush ? bossInterval(6, 6, 0) : 6;
+		if (m_BossPatternTimer % aimedInt == 0)
+		{
+			float dx = playerX - m_BossX;
+			float dz = playerZ - m_BossZ;
+			float dist = sqrtf(dx * dx + dz * dz);
+			if (dist > 1.0f)
+			{
+				float ndx = dx / dist;
+				float ndz = dz / dist;
+				int spread = rush ? bossCount(2, 2) : 2;
+				for (int n = -spread; n <= spread; n++)
+				{
+					float off = (float)n * 0.12f;
+					bullets.AddEnemyBullet(m_BossX, m_BossY, m_BossZ,
+						(ndx * cosf(off) - ndz * sinf(off)) * bulletSpd * 1.3f, 0.0f,
+						(ndx * sinf(off) + ndz * cosf(off)) * bulletSpd * 1.3f,
+						bulletRad * 1.15f, GetColor(255, 255, 100));
+				}
+			}
+		}
+
+		const int rainInt = rush ? bossInterval(4, 4, 0) : 4;
+		if (m_BossPatternTimer % rainInt == 0)
+		{
+			float rx = (float)(GetRand(800) - 400);
+			bullets.AddEnemyBullet(rx, m_BossY, FIELD_HALF_D + 80.0f,
+				0.0f, 0.0f, -bulletSpd * 1.15f, bulletRad * 0.9f, GetColor(0, 255, 200));
 		}
 	}
 }
@@ -590,8 +737,12 @@ void EnemyManager::Update(float playerX, float playerZ, BulletManager& bullets)
 				m_BossIntroClearedBullets = true;
 			}
 		}
-		else if (m_SpellBreakTimer <= 0)
-			UpdateBoss(playerX, playerZ, bullets);
+		else
+		{
+			UpdateBossMovement();
+			if (m_SpellBreakTimer <= 0)
+				UpdateBoss(playerX, playerZ, bullets);
+		}
 		return;
 	}
 
@@ -725,10 +876,42 @@ void EnemyManager::Draw() const
 void EnemyManager::DrawMidBoss() const
 {
 	if (!m_MidBossActive) return;
+
+	if (PreferGameSprites() && ResourceManager::IsReady())
+	{
+		ResourceManager::DrawMidBoss(m_MidBossX, PLAYER_Y, m_MidBossZ, m_MidBossRadius, m_MidBossId, m_MidBossTimer);
+		return;
+	}
+
 	unsigned int col = (m_MidBossId == 1) ? GetColor(255, 100, 180) : GetColor(255, 180, 60);
 	VECTOR c = VGet(m_MidBossX, PLAYER_Y, m_MidBossZ);
-	// 最後の TRUE→FALSE: ライト計算無効化（軽量化）
-	DrawSphere3D(c, m_MidBossRadius, 8, GetColor(40, 10, 50), col, FALSE);
+
+	// [VISUAL_RICH] 脈動ハロー＋同心ライト感
+	if (VISUAL_RICH)
+	{
+		float pulse = sinf((float)GetNowCount() / 130.0f) * 4.0f;
+		SetDrawBlendMode(DX_BLENDMODE_ADD, 110);
+		DrawSphere3D(c, m_MidBossRadius * 1.55f + pulse, 8, col, col, FALSE);
+		SetDrawBlendMode(DX_BLENDMODE_ADD, 60);
+		DrawSphere3D(c, m_MidBossRadius * 2.1f + pulse * 1.4f, 8, col, col, FALSE);
+		SetDrawBlendMode(DX_BLENDMODE_NOBLEND, 0);
+	}
+
+	// [VISUAL_STYLE] / [VISUAL_THEME] 中ボス
+	if (UseTouhouTheme() && UseSilhouetteStyle())
+	{
+		SilhouetteDraw::DrawMidBossYoukai(m_MidBossX, PLAYER_Y, m_MidBossZ, m_MidBossRadius,
+			m_MidBossId, GetColor(40, 10, 50), col, m_MidBossTimer);
+	}
+	else if (UseSilhouetteStyle())
+	{
+		SilhouetteDraw::DrawMidBoss(m_MidBossX, PLAYER_Y, m_MidBossZ, m_MidBossRadius,
+			m_MidBossId, GetColor(40, 10, 50), col, m_MidBossTimer);
+	}
+	else
+	{
+		DrawSphere3D(c, m_MidBossRadius, 8, GetColor(40, 10, 50), col, FALSE);
+	}
 }
 
 // --- DrawBoss: 最終巨大ボスの極彩色3D描画 ---
@@ -736,8 +919,11 @@ void EnemyManager::DrawBoss() const
 {
 	if (!m_BossActive) return;
 
-	VECTOR minPos = VGet(m_BossX - m_BossRadius, m_BossY - m_BossRadius, m_BossZ - m_BossRadius);
-	VECTOR maxPos = VGet(m_BossX + m_BossRadius, m_BossY + m_BossRadius, m_BossZ + m_BossRadius);
+	if (PreferGameSprites() && ResourceManager::IsReady())
+	{
+		ResourceManager::DrawBoss(m_BossX, m_BossY, m_BossZ, m_BossDrawRadius, m_BossPhase, m_BossTimer);
+		return;
+	}
 
 	unsigned int bodyColor = GetColor(15, 5, 30);
 	unsigned int edgeColor;
@@ -746,9 +932,36 @@ void EnemyManager::DrawBoss() const
 	else if (m_BossPhase == 1)  edgeColor = GetColor(255, 180, 0);
 	else                        edgeColor = GetColor(255, 0, 50);
 
-	// 最後の TRUE→FALSE: ライト計算無効化（軽量化）
-	DrawCube3D(minPos, maxPos, bodyColor, edgeColor, FALSE);
+	VECTOR bossCenter = VGet(m_BossX, m_BossY, m_BossZ);
 
-	float coreRadius = m_BossRadius * 0.65f + sinf((float)m_BossTimer / 10.0f) * 3.0f;
-	DrawSphere3D(VGet(m_BossX, m_BossY, m_BossZ), coreRadius, 8, edgeColor, edgeColor, FALSE);
+	// [VISUAL_RICH] ボス周囲に脈動する巨大な2層オーラ
+	if (VISUAL_RICH)
+	{
+		float pulse = sinf((float)m_BossTimer / 14.0f) * 6.0f;
+		SetDrawBlendMode(DX_BLENDMODE_ADD, 120);
+		DrawSphere3D(bossCenter, m_BossDrawRadius * 1.35f + pulse, 8, edgeColor, edgeColor, FALSE);
+		SetDrawBlendMode(DX_BLENDMODE_ADD, 60);
+		DrawSphere3D(bossCenter, m_BossDrawRadius * 1.85f + pulse * 1.3f, 8, edgeColor, edgeColor, FALSE);
+		SetDrawBlendMode(DX_BLENDMODE_NOBLEND, 0);
+	}
+
+	// [VISUAL_STYLE] / [VISUAL_THEME] ボス
+	if (UseTouhouTheme() && UseSilhouetteStyle())
+	{
+		SilhouetteDraw::DrawBossYoukai(m_BossX, m_BossY, m_BossZ, m_BossDrawRadius, m_BossPhase,
+			bodyColor, edgeColor, m_BossTimer);
+	}
+	else if (UseSilhouetteStyle())
+	{
+		SilhouetteDraw::DrawBoss(m_BossX, m_BossY, m_BossZ, m_BossDrawRadius, m_BossPhase,
+			bodyColor, edgeColor, m_BossTimer);
+	}
+	else
+	{
+		VECTOR minPos = VGet(m_BossX - m_BossDrawRadius, m_BossY - m_BossDrawRadius, m_BossZ - m_BossDrawRadius);
+		VECTOR maxPos = VGet(m_BossX + m_BossDrawRadius, m_BossY + m_BossDrawRadius, m_BossZ + m_BossDrawRadius);
+		DrawCube3D(minPos, maxPos, bodyColor, edgeColor, FALSE);
+		float coreRadius = m_BossDrawRadius * 0.65f + sinf((float)m_BossTimer / 10.0f) * 3.0f;
+		DrawSphere3D(bossCenter, coreRadius, 8, edgeColor, edgeColor, FALSE);
+	}
 }
